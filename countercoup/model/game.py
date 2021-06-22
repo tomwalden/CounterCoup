@@ -212,7 +212,7 @@ class Game:
             raise IllegalMoveException("Not at correct state to play this")
 
         if decision:
-            if [x for x in self.players[self.counteract_player] if x in self.current_action.c_action_cards]:
+            if [x for x in self.players[self.counteract_player].cards if x in self.current_action.c_action_cards]:
 
                 # TODO: we should allow the model to select the card to get rid of, if the counteracting player
                 # has both the Ambassador and Captain
