@@ -152,7 +152,7 @@ class Game:
 
                 # If the block was incorrect, then we need to discard the action card and draw a new card
                 # The existing action will continue, however
-                self.discard.append(action_card)
+                self.deck.append(action_card)
                 shuffle(self.deck)
                 self.players[self.action_player].cards.remove(action_card)
                 self.players[self.action_player].cards.append(self.deck.pop(0))
@@ -218,7 +218,7 @@ class Game:
                 # has both the Ambassador and Captain
                 c_action_card = self.current_action.c_action_cards[0]
 
-                self.discard.append(c_action_card)
+                self.deck.append(c_action_card)
                 shuffle(self.deck)
                 self.players[self.counteract_player].cards.remove(c_action_card)
                 self.players[self.counteract_player].cards.append(self.deck.pop(0))
