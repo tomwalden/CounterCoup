@@ -244,14 +244,18 @@ class Game:
         and leaves the game
         :param player: the player thats losing a card
         """
-        self.lose_card_state = self.state
-        self.lose_card_player = self.current_player
-        self.current_player = player
-        self.state = SelectCardToLose
 
-        # If there is only one card.. well, that makes it easy doesn't it?
-        if len(self.players[player].cards) == 1:
-            self.select_card_to_lose(self.players[player].cards[0])
+        # Sometimes the player might still be losing a card after being knocked out of the game
+        # So make sure that it's ignored if so.
+        if self.players[player].in_game:
+            self.lose_card_state = self.state
+            self.lose_card_player = self.current_player
+            self.current_player = player
+            self.state = SelectCardToLose
+
+            # If there is only one card.. well, that makes it easy doesn't it?
+            if len(self.players[player].cards) == 1:
+                self.select_card_to_lose(self.players[player].cards[0])
 
     def __determine_winner(self):
         """
