@@ -91,6 +91,7 @@ class Game:
             current_player.cards.append(self.deck.pop(0))
 
         self.current_action = None
+        self.attack_player = None
 
     def select_action(self, action: Action, attack_player: int = None):
         """
@@ -112,7 +113,12 @@ class Game:
             raise IllegalMoveException("Too many coins, can only Coup")
 
         self.current_action = action
-        self.attack_player = attack_player
+
+        if action in [Coup, Assassinate, Steal]:
+            if attack_player is None:
+                raise IllegalMoveException("Need attacked player for this action")
+            else:
+                self.attack_player = attack_player
 
         # If the current action cannot be blocked or counteracted, then jump straight to playing the action
         if action.c_action_cards == [] and action.action_card is None:
