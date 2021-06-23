@@ -4,6 +4,6 @@ class Player:
     """
 
     def __init__(self):
-        self.coins = 3
+        self.coins = 2
         self.cards = []
         self.in_game = True
