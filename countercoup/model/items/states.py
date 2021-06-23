@@ -1,26 +1,29 @@
-class SelectAction:
+from countercoup.model.state import State
+
+
+class SelectAction(State):
     pass
 
 
-class DecideToBlock:
+class DecideToBlock(State):
     pass
 
 
-class DecideToCounteract:
+class DecideToCounteract(State):
     pass
 
 
-class SelectCardsToDiscard:
+class SelectCardsToDiscard(State):
     pass
 
 
-class GameFinished:
+class GameFinished(State):
     pass
 
 
-class DecideToBlockCounteract:
+class DecideToBlockCounteract(State):
     pass
 
 
-class SelectCardToLose:
+class SelectCardToLose(State):
     pass
