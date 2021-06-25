@@ -9,6 +9,7 @@ class Assassinate(Action):
 
     action_card = Assassin
     c_action_cards = [Contessa]
+    attack_action = True
 
     cost = 3
 
@@ -19,6 +20,7 @@ class Coup(Action):
     """
 
     cost = 7
+    attack_action = True
 
 
 class ForeignAid(Action):
@@ -43,6 +45,7 @@ class Steal(Action):
 
     action_card = Captain
     c_action_cards = [Captain, Ambassador]
+    attack_action = True
 
 
 class Tax(Action):
