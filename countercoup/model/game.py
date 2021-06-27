@@ -21,7 +21,6 @@ class Game:
 
         self.deck = [Duke, Contessa, Captain, Assassin, Ambassador] * 3
         shuffle(self.deck)
-        self.discard = []
 
         for x in range(num_of_players):
             p = Player()
@@ -313,7 +312,7 @@ class Game:
             raise IllegalMoveException("You can't lose a card you don't already have")
 
         self.players[self.current_player].cards.remove(card)
-        self.discard.append(card)
+        self.players[self.current_player].discard.append(card)
 
         # If the cards are empty for the player, the player is out of the game
         if not self.players[self.current_player].cards:
