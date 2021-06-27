@@ -97,6 +97,7 @@ class Game:
         self.current_history = None
         self.current_action = None
         self.attack_player = None
+        self.counteract_player = None
 
     def select_action(self, action: Action, attack_player: int = None):
         """
@@ -264,6 +265,7 @@ class Game:
 
                 self.state = SelectAction
                 self.current_action = None
+                self.counteract_player = None
                 self.action_player = self.__next_player(self.action_player)
                 self.current_player = self.action_player
 
@@ -334,6 +336,7 @@ class Game:
                 self.action_player = self.__next_player(self.action_player)
                 self.current_player = self.action_player
                 self.state = SelectAction
+                self.counteract_player = None
             elif self.lose_card_state == DecideToCounteract:
                 if self.attack_player is not None or self.__next_player(self.counteract_player) == self.action_player:
                     self.__play_action()
