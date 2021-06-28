@@ -11,11 +11,11 @@ class Infoset:
 
     def __init__(self, g: Game):
 
-        self.fixed_vector = self._return_fixed_vector(g)
-        self.history_vectors = self._return_history_vectors(g)
+        self.fixed_vector = self.__return_fixed_vector(g)
+        self.history_vectors = self.__return_history_vectors(g)
 
     @staticmethod
-    def _return_fixed_vector(g: Game):
+    def __return_fixed_vector(g: Game):
         """
         Generate a vector that serializes the non-history parts of the game state
         :param g: the Game object from the model
@@ -59,7 +59,13 @@ class Infoset:
         return vec
 
     @staticmethod
-    def _return_history_vectors(g: Game):
+    def __return_history_vectors(g: Game):
+        """
+        Return the history vectors for each player, to be fed sequentially into a recurrent neural network
+        such as a LSTM cell
+        :param g: the Game object
+        :return: a list of list of history vectors
+        """
 
         flat_history = []
 
