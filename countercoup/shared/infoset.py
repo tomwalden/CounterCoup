@@ -98,16 +98,3 @@ class Infoset:
                 vec.append([x[1] for x in flat_history if x[0] == play_num])
 
         return vec
-
-
-
-
-
-
-
-
-
-
-
-
-
