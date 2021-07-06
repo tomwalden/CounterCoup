@@ -58,7 +58,7 @@ class Infoset:
                 vec.append(1 if g.action_player == play_num else 0)
                 vec.append(1 if g.counteract_player == play_num else 0)
 
-        return np_array(vec)
+        return np_array([vec])
 
     @staticmethod
     def __return_history_vectors(g: Game):
@@ -97,6 +97,6 @@ class Infoset:
         # All other players go in
         for play_num, player in enumerate(g.players):
             if play_num != g.current_player:
-                vec.append(np_array([x[1] for x in flat_history if x[0] == play_num]))
+                vec.append(np_array([[[x[1] for x in flat_history if x[0] == play_num]]]))
 
         return vec

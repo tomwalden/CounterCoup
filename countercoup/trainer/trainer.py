@@ -277,7 +277,7 @@ class Trainer:
         if total == 0:
             return {x: 1 / len(output) for x in output}
         else:
-            return {x: output[x] / total for x in output}
+            return {x: output[x] if output[x] > 0 else 0 / total for x in output}
 
     def calculate_regrets(self, values: {}, strategy: {}, memory: Memory, infoset: Infoset, output_formatter):
         """

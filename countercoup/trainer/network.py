@@ -27,7 +27,7 @@ class Network:
 
         for num, action in enumerate(self.outputs):
             if filt is None or action in filt:
-                output[action] = result[num]
+                output[action] = result[0][num]
 
         return output
 
@@ -40,10 +40,10 @@ class Network:
         """
 
         fixed_input = Input(shape=(39,))
-        history_curr_play_input = Input(shape=(10, 12))
-        history_play_1_input = Input(shape=(10, 12))
-        history_play_2_input = Input(shape=(10, 12))
-        history_play_3_input = Input(shape=(10, 12))
+        history_curr_play_input = Input(shape=(None, 12))
+        history_play_1_input = Input(shape=(None, 12))
+        history_play_2_input = Input(shape=(None, 12))
+        history_play_3_input = Input(shape=(None, 12))
 
         hist_lstm_curr = LSTM(10)(history_curr_play_input)
         hist_lstm_play_1 = LSTM(10)(history_play_1_input)
