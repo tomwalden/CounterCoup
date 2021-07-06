@@ -2,7 +2,6 @@ from countercoup.shared.infoset import Infoset
 from countercoup.trainer.memory import Memory
 from keras.models import Model
 from keras.layers import Dense, LSTM, Concatenate, Input
-from numpy import array as np_array
 
 
 class Network:
@@ -32,8 +31,8 @@ class Network:
 
         return output
 
-    def train(self, memory: Memory, epochs: int = 10):
-        self.model.train(x=memory.data, epochs=epochs, validation_split=0.1)
+    def train(self, memory: Memory, epochs: int = 10, validation_split: float = 0.1):
+        self.model.train(x=memory.data, epochs=epochs, validation_split=validation_split)
 
     def __define_structure(self):
         """
@@ -69,7 +68,7 @@ class Network:
         self.model.compile(loss='categorical_crossentropy', optimizer='adam')
 
     @classmethod
-    def create_output(cls, iput: Infoset, output: dict, iteration: int) -> tuple:
+    def create_train_data(cls, iput: Infoset, output: dict, iteration: int) -> tuple:
         """
         Turn the output dict into a tuple that can go into a NN
         :param iput: the Infoset input
