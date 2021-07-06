@@ -2,6 +2,7 @@ from countercoup.shared.infoset import Infoset
 from countercoup.trainer.memory import Memory
 from keras.models import Model
 from keras.layers import Dense, LSTM, Concatenate, Input
+from numpy import array as np_array
 
 
 class Network:
@@ -14,9 +15,15 @@ class Network:
     def __init__(self):
         self.__define_structure()
 
-    def get_output(self, infoset: Infoset, filt: [] = None) -> dict:
-        input = [infoset.fixed_vector] + infoset.history_vectors
-        result = self.model.predict(input)
+    def get_output(self, infoset: Infoset, filt: iter = None) -> dict:
+        """
+        Return the predicted output from the neural network
+        :param infoset: the Infoset object that forms the input
+        :param filt: the outputs that we want to potentially restrict on
+        :return: a dict of possible outputs and output values
+        """
+
+        result = self.model.predict([infoset.fixed_vector] + infoset.history_vectors)
         output = {}
 
         for num, action in enumerate(self.outputs):
@@ -25,8 +32,8 @@ class Network:
 
         return output
 
-    def train(self, memory: Memory):
-        pass
+    def train(self, memory: Memory, epochs: int = 10):
+        self.model.train(x=memory.data, epochs=epochs, validation_split=0.1)
 
     def __define_structure(self):
         """
@@ -59,14 +66,19 @@ class Network:
         self.model = Model(
             [fixed_input, history_curr_play_input, history_play_1_input, history_play_2_input, history_play_3_input],
             output)
+        self.model.compile(loss='categorical_crossentropy', optimizer='adam')
 
     @classmethod
-    def create_output(cls, output: dict) -> list:
+    def create_output(cls, iput: Infoset, output: dict, iteration: int) -> tuple:
         """
-        Turn the output dict into a list that can go into a NN
-        :param output: the dict outpt
+        Turn the output dict into a tuple that can go into a NN
+        :param iput: the Infoset input
+        :param output: the dict output
+        :param iteration: the iteration. Used to weigh when training.
         :return: a list output
         """
+
+        new_input = iput.fixed_vector + iput.history_vectors
 
         new_output = []
 
@@ -76,4 +88,4 @@ class Network:
             else:
                 new_output.append(0)
 
-        return new_output
+        return new_input, new_output, iteration
