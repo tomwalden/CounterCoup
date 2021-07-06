@@ -320,7 +320,7 @@ class Trainer:
         act_actions = []
         act = [Income, ForeignAid, Coup, Tax, Assassinate, Exchange, Steal]
 
-        opponents = [i for i, p in enumerate(g.get_opponents()) if p.in_game]
+        opponents = [i + 1 for i, p in enumerate(g.get_opponents()) if p.in_game]
 
         if g.players[g.action_player].coins >= 10:
             act = [Coup]
