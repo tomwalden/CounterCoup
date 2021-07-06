@@ -6,6 +6,8 @@ from countercoup.model.items.states import SelectAction, DecideToBlock, DecideTo
 from countercoup.trainer.networks.ActionNet import ActionNet
 from countercoup.trainer.networks.BlockCounteractNet import BlockCounteractNet
 from countercoup.trainer.networks.LoseNet import LoseNet
+from countercoup.trainer.network import Network
+from countercoup.trainer.memory import Memory
 from countercoup.shared.infoset import Infoset
 from countercoup.shared.tools import Tools
 from copy import deepcopy
@@ -18,57 +20,99 @@ class Trainer:
     Overarching class for generating the neural networks needed for Deep CFR in CounterCoup
     """
 
-    def __init__(self, num_of_player, num_of_traversals):
-        self.num_of_player = num_of_player
+    def __init__(self, num_of_traversals, memory_size):
+        self.num_of_player = 4
         self.num_of_traversals = num_of_traversals
+        self.memory_size = memory_size
+        self.iteration = 0
 
-        self.action_advantage_nets = []
-        self.action_advantage_mem = []
-        self.action_strategy_nets = None
-        self.action_strategy_mem = None
+        self.action_advantage_nets = None
+        self.action_advantage_mem = [Memory(self.memory_size) for x in range(self.num_of_player)]
+        self.action_strategy_nets = ActionNet()
+        self.action_strategy_mem = Memory(self.memory_size)
 
-        self.block_nets = []
-        self.block_mem = []
-        self.block_strategy_nets = None
-        self.block_strategy_mem = None
+        self.block_nets = None
+        self.block_mem = [Memory(self.memory_size) for x in range(self.num_of_player)]
+        self.block_strategy_nets = BlockCounteractNet()
+        self.block_strategy_mem = Memory(self.memory_size)
 
-        self.counteract_nets = []
-        self.counteract_mem = []
-        self.counteract_strategy_mem = None
-        self.counteract_strategy_nets = None
+        self.counteract_nets = None
+        self.counteract_mem = [Memory(self.memory_size) for x in range(self.num_of_player)]
+        self.counteract_strategy_nets = BlockCounteractNet()
+        self.counteract_strategy_mem = Memory(self.memory_size)
 
-        self.lose_nets = []
-        self.lose_mem = []
-        self.lose_strategy_nets = None
-        self.lose_strategy_mem = None
+        self.lose_nets = None
+        self.lose_mem = [Memory(self.memory_size) for x in range(self.num_of_player)]
+        self.lose_strategy_nets = LoseNet()
+        self.lose_strategy_mem = Memory(self.memory_size)
+
+        self.init_advantage_nets()
+
+    def init_advantage_nets(self):
+        """
+        Set up empty advantage networks
+        :return:
+        """
+        self.action_advantage_nets = [ActionNet() for x in range(self.num_of_player)]
+        self.block_nets = [BlockCounteractNet() for x in range(self.num_of_player)]
+        self.counteract_nets = [BlockCounteractNet() for x in range(self.num_of_player)]
+        self.lose_nets = [LoseNet() for x in range(self.num_of_player)]
+
+    def train_advantage_nets(self):
+        """
+        Train the advantage networks
+        """
+        for x in range(self.num_of_player):
+            self.action_advantage_nets[x].train(self.action_advantage_mem[x])
+            self.block_nets[x].train(self.block_mem[x])
+            self.counteract_nets[x].train(self.counteract_mem[x])
+            self.lose_nets[x].train(self.lose_mem[x])
 
     def perform_iteration(self):
         """
         Perform one iteration of the Deep CFR algorithm
         """
+        self.iteration += 1
 
         for player in range(self.num_of_player):
             for k in range(self.num_of_traversals):
                 self.traverse(Game(self.num_of_player), player)
 
-    def traverse(self, game: Game, curr_play: int):
+        self.init_advantage_nets()
+        self.train_advantage_nets()
 
-        # If the game is finished, then return 1 if the player won the game, else 0
+    def train_strategy_networks(self):
+        self.action_strategy_nets.train(self.action_strategy_mem)
+        self.block_strategy_nets.train(self.block_strategy_mem)
+        self.counteract_strategy_nets.train(self.counteract_strategy_mem)
+        self.lose_strategy_nets.train(self.lose_strategy_mem)
+
+    def traverse(self, game: Game, curr_play: int):
+        """
+        Traverse the Coup game tree recursively
+        :param game: the Game object from the model being played
+        :param curr_play: the current player model
+        :return: the instantaneous regret value for all histories at this prefix
+        """
+
+        # If the game is finished, then return 1 if the player won the game, else -1
         if game.state == GameFinished:
             if game.winning_player == curr_play:
                 return 1
             else:
-                return 0
+                return -1
         else:
             # Game continues...
             infoset = Infoset(game)
+            values = {}
 
             if game.current_player == curr_play:
                 if game.state == SelectAction:
-                    new_adv = self.action_advantage_nets[curr_play].get_output(infoset, self.get_actions(game))
-                    strat_adv = self.normalize(new_adv)
+                    strategy = self.get_regret_strategy(self.action_advantage_nets[curr_play]
+                                                        , infoset
+                                                        , self.get_actions(game))
 
-                    for x in sample(new_adv.keys(), 3):
+                    for x in sample(strategy.keys(), 3):
                         next_game = deepcopy(game)
 
                         if x[0].attack_action:
@@ -76,82 +120,94 @@ class Trainer:
                         else:
                             next_game.select_action(x[0])
 
-                        new_adv[x] = self.traverse(next_game, curr_play)
+                        values[x] = self.traverse(next_game, curr_play)
 
-                    inst_regret = sum([strat_adv[x] * new_adv[x] for x in new_adv])
-                    self.action_advantage_mem[curr_play].add((infoset, ActionNet.create_output({x: new_adv[x] - inst_regret for x in new_adv})))
-                    return inst_regret
+                    return self.calculate_regrets(values
+                                                  , strategy
+                                                  , self.action_advantage_mem[curr_play]
+                                                  , infoset
+                                                  , ActionNet.create_output)
 
                 elif game.state == DecideToBlock:
-                    new_adv = self.block_nets[curr_play].get_output(infoset)
-                    strat_adv = self.normalize(new_adv)
+                    strategy = self.get_regret_strategy(self.block_nets[curr_play], infoset)
 
-                    choice = sample(new_adv.keys(), 1)[0]
+                    choice = sample(strategy.keys(), 1)[0]
                     game.decide_to_block(choice)
-                    new_adv[choice] = self.traverse(game, curr_play)
+                    values[choice] = self.traverse(game, curr_play)
 
-                    inst_regret = sum([strat_adv[x] * new_adv[x] for x in new_adv])
-                    self.block_mem[curr_play].add((infoset, BlockCounteractNet.create_output({x: new_adv[x] - inst_regret for x in new_adv})))
-                    return inst_regret
+                    return self.calculate_regrets(values
+                                                  , strategy
+                                                  , self.block_mem[curr_play]
+                                                  , infoset
+                                                  , BlockCounteractNet.create_output)
 
                 elif game.state == DecideToCounteract:
-                    new_adv = self.counteract_nets[curr_play].get_output(infoset)
-                    strat_adv = self.normalize(new_adv)
+                    strategy = self.get_regret_strategy(self.counteract_nets[curr_play], infoset)
 
-                    choice = sample(new_adv.keys(), 1)[0]
+                    choice = sample(strategy.keys(), 1)[0]
                     game.decide_to_counteract(choice)
-                    new_adv[choice] = self.traverse(game, curr_play)
+                    values[choice] = self.traverse(game, curr_play)
 
-                    inst_regret = sum([strat_adv[x] * new_adv[x] for x in new_adv])
-                    self.block_mem[curr_play].add((infoset, BlockCounteractNet.create_output({x: new_adv[x] - inst_regret for x in new_adv})))
-                    return inst_regret
+                    return self.calculate_regrets(values
+                                                  , strategy
+                                                  , self.counteract_mem[curr_play]
+                                                  , infoset
+                                                  , BlockCounteractNet.create_output)
 
                 elif game.state == DecideToBlockCounteract:
-                    new_adv = self.block_nets[curr_play].get_output(infoset)
-                    strat_adv = self.normalize(new_adv)
+                    strategy = self.get_regret_strategy(self.block_nets[curr_play], infoset)
 
-                    choice = sample(new_adv.keys(), 1)[0]
+                    choice = sample(strategy.keys(), 1)[0]
                     game.decide_to_block_counteract(choice)
-                    new_adv[choice] = self.traverse(game, curr_play)
+                    values[choice] = self.traverse(game, curr_play)
 
-                    inst_regret = sum([strat_adv[x] * new_adv[x] for x in new_adv])
-                    self.block_mem[curr_play].add((infoset, BlockCounteractNet.create_output({x: new_adv[x] - inst_regret for x in new_adv})))
-                    return inst_regret
+                    return self.calculate_regrets(values
+                                                  , strategy
+                                                  , self.block_mem[curr_play]
+                                                  , infoset
+                                                  , BlockCounteractNet.create_output)
 
                 elif game.state == SelectCardsToDiscard:
-                    new_adv = self.lose_nets[curr_play].get_output(infoset, Hand.get_all_hands(game.current_player().cards))
-                    strat_adv = self.normalize(new_adv)
+                    strategy = self.get_regret_strategy(self.lose_nets[curr_play]
+                                                        , infoset
+                                                        , Hand.get_all_hands(game.get_curr_player().cards))
 
                     # For Exchange, select 2 possible discard selections
-                    for x in sample(new_adv.keys(), 2):
+                    for x in sample(strategy.keys(), 2):
                         next_game = deepcopy(game)
 
                         next_game.select_cards_to_discard(x.card1, x.card2)
-                        new_adv[x] = self.traverse(next_game, curr_play)
+                        values[x] = self.traverse(next_game, curr_play)
 
-                    inst_regret = sum([strat_adv[x] * new_adv[x] for x in new_adv])
-                    self.lose_mem[curr_play].add((infoset, LoseNet.create_output({x: new_adv[x] - inst_regret for x in new_adv})))
-                    return inst_regret
+                    return self.calculate_regrets(values
+                                                  , strategy
+                                                  , self.lose_mem[curr_play]
+                                                  , infoset
+                                                  , LoseNet.create_output)
 
                 elif game.state == SelectCardToLose:
                     lose_hand = [Hand([game.get_curr_player().cards[0]]), Hand([game.get_curr_player().cards[1]])]
-                    new_adv = self.lose_nets[curr_play].get_output(infoset, lose_hand)
-                    strat_adv = self.normalize(new_adv)
+                    strategy = self.get_regret_strategy(self.lose_nets[curr_play], infoset, lose_hand)
 
-                    choice = sample(new_adv.keys(), 1)[0]
+                    choice = sample(strategy.keys(), 1)[0]
                     game.select_card_to_lose(choice.card1)
-                    new_adv[choice] = self.traverse(game, curr_play)
+                    values[choice] = self.traverse(game, curr_play)
 
-                    inst_regret = sum([strat_adv[x] * new_adv[x] for x in new_adv])
-                    self.lose_mem[curr_play].add((infoset, {x: new_adv[x] - inst_regret for x in new_adv}))
-                    return inst_regret
+                    return self.calculate_regrets(values
+                                                  , strategy
+                                                  , self.lose_mem[curr_play]
+                                                  , infoset
+                                                  , LoseNet.create_output)
+
             else:
                 if game.state == SelectAction:
-                    new_adv = self.action_advantage_nets[game.current_player].get_output(infoset, self.get_actions(game))
-                    strat_adv = self.normalize(new_adv)
-                    self.action_strategy_mem.add((infoset, strat_adv))
+                    strategy = self.get_regret_strategy(self.action_advantage_nets[game.current_player]
+                                                        , infoset
+                                                        , self.get_actions(game))
+                    self.action_strategy_mem.add(ActionNet.create_output(infoset, strategy, self.iteration))
 
-                    choice = Tools.select_from_strategy(strat_adv)
+                    choice = Tools.select_from_strategy(strategy)
+
                     if choice[0].attack_action:
                         game.select_action(choice[0], choice[1])
                     else:
@@ -160,66 +216,99 @@ class Trainer:
                     return self.traverse(game, curr_play)
 
                 elif game.state == DecideToBlock:
-                    new_adv = self.block_nets[game.current_player].get_output(infoset)
-                    strat_adv = self.normalize(new_adv)
-                    self.block_strategy_mem.add((infoset, strat_adv))
+                    strategy = self.get_regret_strategy(self.block_nets[game.current_player], infoset)
+                    self.block_strategy_mem.add(BlockCounteractNet.create_output(infoset, strategy, self.iteration))
 
-                    choice = Tools.select_from_strategy(strat_adv)
+                    choice = Tools.select_from_strategy(strategy)
+
                     game.decide_to_block(choice)
 
                     return self.traverse(game, curr_play)
 
                 elif game.state == DecideToCounteract:
-                    new_adv = self.counteract_nets[game.current_player].get_output(infoset)
-                    strat_adv = self.normalize(new_adv)
-                    self.block_strategy_mem.add((infoset, strat_adv))
+                    strategy = self.get_regret_strategy(self.counteract_nets[game.current_player], infoset)
+                    self.counteract_strategy_mem.add(BlockCounteractNet.create_output(infoset, strategy, self.iteration))
 
-                    choice = Tools.select_from_strategy(strat_adv)
-                    game.decide_to_block(choice)
+                    choice = Tools.select_from_strategy(strategy)
+
+                    game.decide_to_counteract(choice)
 
                     return self.traverse(game, curr_play)
 
                 elif game.state == DecideToBlockCounteract:
-                    new_adv = self.block_nets[game.current_player].get_output(infoset)
-                    strat_adv = self.normalize(new_adv)
-                    self.block_strategy_mem.add((infoset, strat_adv))
+                    strategy = self.get_regret_strategy(self.block_nets[game.current_player], infoset)
+                    self.block_strategy_mem.add(BlockCounteractNet.create_output(infoset, strategy, self.iteration))
 
-                    choice = Tools.select_from_strategy(strat_adv)
-                    game.decide_to_block(choice)
+                    choice = Tools.select_from_strategy(strategy)
+
+                    game.decide_to_block_counteract(choice)
 
                     return self.traverse(game, curr_play)
 
                 elif game.state == SelectCardsToDiscard:
-                    new_adv = self.lose_nets[game.current_player].get_output(infoset, Hand.get_all_hands(game.current_player().cards))
-                    strat_adv = self.normalize(new_adv)
-                    self.lose_strategy_mem.add((infoset, strat_adv))
+                    strategy = self.get_regret_strategy(self.lose_nets[game.current_player]
+                                                        , infoset
+                                                        , Hand.get_all_hands(game.current_player().cards))
+                    self.lose_strategy_mem.add(LoseNet.create_output(infoset, strategy))
 
-                    choice = Tools.select_from_strategy(strat_adv)
+                    choice = Tools.select_from_strategy(strategy)
+
                     game.select_cards_to_discard(choice.card1, choice.card2)
 
                     return self.traverse(game, curr_play)
 
                 elif game.state == SelectCardToLose:
                     lose_hand = [Hand([game.get_curr_player().cards[0]]), Hand([game.get_curr_player().cards[1]])]
-                    new_adv = self.lose_nets[curr_play].get_output(infoset, lose_hand)
-                    strat_adv = self.normalize(new_adv)
+                    strategy = self.get_regret_strategy(self.lose_nets[game.current_player]
+                                                        , infoset
+                                                        , lose_hand)
+                    self.lose_strategy_mem.add(LoseNet.create_output(infoset, strategy, self.iteration))
 
-                    choice = Tools.select_from_strategy(strat_adv)
+                    choice = Tools.select_from_strategy(strategy)
+
                     game.select_card_to_lose(choice.card1)
 
                     return self.traverse(game, curr_play)
 
     @staticmethod
-    def normalize(output: {}):
-        sum = 0
+    def get_regret_strategy(network: Network, infoset: Infoset, filt: [] = None):
+        output = network.get_output(infoset, filt)
+        total = sum(filter(lambda x: x > 0, output.values()))
 
-        for x in output:
-            sum += output[x]
-
-        if sum == 0:
+        if total == 0:
             return {x: 1 / len(output) for x in output}
         else:
-            return {x: output[x] / sum for x in output}
+            return {x: output[x] / total for x in output}
+
+    def calculate_regrets(self, values: {}, strategy: {}, memory: Memory, infoset: Infoset, output_formatter):
+        """
+        Calculate the regret values (and insert them into memory)
+        :param values:
+        :param strategy:
+        :param memory:
+        :param infoset:
+        :param output_formatter:
+        :return:
+        """
+
+        instr_regret = 0
+
+        for x in values:
+            instr_regret += strategy[x] * values[x]
+
+        # Scale the instantaneous regret by the inverse of the fraction of actions selected
+        instr_regret *= len(strategy) / len(values)
+
+        new_regrets = {}
+        for x in strategy:
+            if x in values:
+                new_regrets[x] = values[x] - instr_regret
+            else:
+                new_regrets[x] = 0 - instr_regret
+
+        memory.add(output_formatter(infoset, new_regrets, self.iteration))
+
+        return instr_regret
 
     @staticmethod
     def get_actions(g: Game):
