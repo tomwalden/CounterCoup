@@ -1,6 +1,7 @@
 from countercoup.model.game import Game
 from countercoup.model.items.cards import Duke, Assassin, Ambassador, Captain, Contessa
 from countercoup.model.items.actions import Income, ForeignAid, Coup, Tax, Assassinate, Exchange, Steal
+from numpy import array as np_array
 
 
 class Infoset:
@@ -19,7 +20,8 @@ class Infoset:
         """
         Generate a vector that serializes the non-history parts of the game state
         :param g: the Game object from the model
-        :return: a vector with the current players hand, the number of cards each player has, and
+        :return: a Numpy array with the current players hand, the number of cards each player has, and
+                 the current moves.
         """
 
         vec = []
@@ -56,7 +58,7 @@ class Infoset:
                 vec.append(1 if g.action_player == play_num else 0)
                 vec.append(1 if g.counteract_player == play_num else 0)
 
-        return vec
+        return np_array(vec)
 
     @staticmethod
     def __return_history_vectors(g: Game):
@@ -90,11 +92,11 @@ class Infoset:
                 flat_history.append((history.counteracting_player, c_act_vec))
 
         # First LSTM cell is for current player
-        vec = [[x[1] for x in flat_history if x[0] == g.current_player]]
+        vec = [np_array([x[1] for x in flat_history if x[0] == g.current_player])]
 
         # All other players go in
         for play_num, player in enumerate(g.players):
             if play_num != g.current_player:
-                vec.append([x[1] for x in flat_history if x[0] == play_num])
+                vec.append(np_array([x[1] for x in flat_history if x[0] == play_num]))
 
         return vec
