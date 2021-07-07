@@ -251,7 +251,7 @@ class Trainer:
                     strategy = self.get_regret_strategy(self.lose_nets[game.current_player - 1]
                                                         , infoset
                                                         , Hand.get_all_hands(game.get_curr_player().cards))
-                    self.lose_strategy_mem.add(LoseNet.create_train_data(infoset, strategy))
+                    self.lose_strategy_mem.add(LoseNet.create_train_data(infoset, strategy, self.iteration))
 
                     choice = Tools.select_from_strategy(strategy)
 
