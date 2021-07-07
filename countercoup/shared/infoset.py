@@ -94,12 +94,12 @@ class Infoset:
         # First LSTM cell is for current player - ensure that an empty history has the
         # correct shape
         curr_history = [x[1] for x in flat_history if x[0] == g.current_player]
-        vec = [empty((1, 0, 12)) if not curr_history else np_array([curr_history])]
+        vec = [empty((1, 1, 12)) if not curr_history else np_array([curr_history])]
 
         # All other players go in
         for play_num, player in enumerate(g.players):
             if play_num != g.current_player:
                 play_history = [x[1] for x in flat_history if x[0] == play_num]
-                vec.append(empty((1, 0, 12)) if not play_history else np_array([play_history]))
+                vec.append(empty((1, 1, 12)) if not play_history else np_array([play_history]))
 
         return vec
