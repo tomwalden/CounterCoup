@@ -66,8 +66,6 @@ class Game:
         if self.attack_player is not None:
             attack_player = self.players[self.attack_player]
 
-        current_player.coins -= self.current_action.cost
-
         if self.current_action == Exchange:
             self.state = SelectCardsToDiscard
         else:
@@ -165,6 +163,9 @@ class Game:
             else:
                 self.attack_player = attack_player
                 self.current_history.attacking_player = attack_player
+
+        # Player pays up even if the action is unsuccessful.
+        self.get_curr_player().coins -= self.current_action.cost
 
         # If the current action cannot be blocked or counteracted, then jump straight to playing the action
         if action.c_action_cards == [] and action.action_card is None:
