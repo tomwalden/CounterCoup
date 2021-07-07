@@ -211,7 +211,7 @@ class Trainer:
                     choice = Tools.select_from_strategy(strategy)
 
                     if choice[0].attack_action:
-                        game.select_action(choice[0], choice[1])
+                        game.select_action(choice[0], game.get_opponents()[choice[1]])
                     else:
                         game.select_action(choice[0])
 
@@ -280,7 +280,7 @@ class Trainer:
         if total == 0:
             return {x: 1 / len(output) for x in output}
         else:
-            return {x: output[x] if output[x] > 0 else 0 / total for x in output}
+            return {x: (output[x] if output[x] > 0 else 0) / total for x in output}
 
     def calculate_regrets(self, values: {}, strategy: {}, memory: Memory, infoset: Infoset, output_formatter):
         """
