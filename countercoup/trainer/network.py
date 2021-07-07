@@ -22,7 +22,7 @@ class Network:
         :return: a dict of possible outputs and output values
         """
 
-        result = self.model.predict([infoset.fixed_vector] + infoset.history_vectors)
+        result = self.model.predict(infoset.fixed_vector + infoset.history_vectors)
         output = {}
 
         for num, action in enumerate(self.outputs):
@@ -65,7 +65,7 @@ class Network:
         self.model = Model(
             [fixed_input, history_curr_play_input, history_play_1_input, history_play_2_input, history_play_3_input],
             output)
-        self.model.compile(loss='categorical_crossentropy', optimizer='adam')
+        self.model.compile(loss='mean_squared_error', optimizer='adam')
 
     @classmethod
     def create_train_data(cls, iput: Infoset, output: dict, iteration: int) -> tuple:

@@ -92,11 +92,11 @@ class Infoset:
                 flat_history.append((history.counteracting_player, c_act_vec))
 
         # First LSTM cell is for current player
-        vec = [np_array([[[x[1] for x in flat_history if x[0] == g.current_player]]])]
+        vec = [np_array([[x[1] for x in flat_history if x[0] == g.current_player]])]
 
         # All other players go in
         for play_num, player in enumerate(g.players):
             if play_num != g.current_player:
-                vec.append(np_array([[[x[1] for x in flat_history if x[0] == play_num]]]))
+                vec.append(np_array([[x[1] for x in flat_history if x[0] == play_num]]))
 
         return vec
