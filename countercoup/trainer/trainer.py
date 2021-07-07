@@ -118,7 +118,7 @@ class Trainer:
                         next_game = deepcopy(game)
 
                         if x[0].attack_action:
-                            next_game.select_action(x[0], x[1])
+                            next_game.select_action(x[0], next_game.get_opponents()[x[1]])
                         else:
                             next_game.select_action(x[0])
 
@@ -250,7 +250,7 @@ class Trainer:
                 elif game.state == SelectCardsToDiscard:
                     strategy = self.get_regret_strategy(self.lose_nets[game.current_player - 1]
                                                         , infoset
-                                                        , Hand.get_all_hands(game.current_player().cards))
+                                                        , Hand.get_all_hands(game.get_curr_player().cards))
                     self.lose_strategy_mem.add(LoseNet.create_train_data(infoset, strategy))
 
                     choice = Tools.select_from_strategy(strategy)
@@ -323,7 +323,7 @@ class Trainer:
         act_actions = []
         act = [Income, ForeignAid, Coup, Tax, Assassinate, Exchange, Steal]
 
-        opponents = [i + 1 for i, p in enumerate(g.get_opponents()) if p.in_game]
+        opponents = g.get_opponents()
 
         if g.players[g.action_player].coins >= 10:
             act = [Coup]
@@ -331,8 +331,9 @@ class Trainer:
         for x in act:
             if g.players[g.action_player].coins >= x.cost:
                 if x.attack_action:
-                    for p in opponents:
-                        act_actions.append((x, p))
+                    for p in range(len(opponents)):
+                        if g.players[opponents[p]].in_game:
+                            act_actions.append((x, p))
                 else:
                     act_actions.append((x, None))
 

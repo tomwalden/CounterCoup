@@ -123,10 +123,11 @@ class Game:
         Return a list of opponents to the current player
         :return: the list of opponents
         """
+
         output = []
-        for n, p in enumerate(self.players):
+        for n in range(len(self.players)):
             if n != self.current_player:
-                output.append(p)
+                output.append(n)
 
         return output
 
