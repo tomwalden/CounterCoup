@@ -22,7 +22,7 @@ class Network:
         :return: a dict of possible outputs and output values
         """
 
-        result = self.model.predict(infoset.fixed_vector + infoset.history_vectors)
+        result = self.model.predict([infoset.fixed_vector] + infoset.history_vectors)
         output = {}
 
         for num, action in enumerate(self.outputs):
@@ -77,7 +77,7 @@ class Network:
         :return: a list output
         """
 
-        new_input = iput.fixed_vector + iput.history_vectors
+        new_input = [iput.fixed_vector] + iput.history_vectors
 
         new_output = []
 
