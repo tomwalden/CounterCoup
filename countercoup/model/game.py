@@ -199,7 +199,6 @@ class Game:
             if action_card in self.get_action_player().cards:
                 # The block was unsuccessful - the challenging player loses a card
                 self.current_history.block_successful = False
-                self.__lose_card(self.current_player)
 
                 # If the block was incorrect, then we need to discard the action card and draw a new card
                 # The existing action will continue, however.
@@ -208,6 +207,7 @@ class Game:
                 self.get_action_player().cards.remove(action_card)
                 self.get_action_player().cards.append(self.deck.pop(0))
 
+                self.__lose_card(self.current_player)
             else:
                 # Block successful. Nice job!
                 self.current_history.block_successful = True
