@@ -22,7 +22,7 @@ class Network:
         :return: a dict of possible outputs and output values
         """
 
-        result = self.model.predict([infoset.fixed_vector] + infoset.history_vectors)
+        result = self.model.predict([infoset.fixed_vector] + infoset.history_vectors).numpy()
         output = {}
 
         for num, action in enumerate(self.outputs):
