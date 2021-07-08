@@ -104,6 +104,12 @@ class Trainer:
             else:
                 return -1
         else:
+
+            # If, for some reason the game has gone on for 50 turns, everyone declares the game
+            # a draw and goes to the pub
+            if game.get_game_length() >= 50:
+                return 0
+
             # Game continues...
             infoset = Infoset(game)
             values = {}

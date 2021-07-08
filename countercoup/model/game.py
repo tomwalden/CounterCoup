@@ -132,6 +132,13 @@ class Game:
 
         return output
 
+    def get_game_length(self):
+        """
+        Get the length of the game so far
+        :return: the number of rounds in the game
+        """
+        return len(self.history)
+
     def select_action(self, action: Action, attack_player: int = None):
         """
         Play an action, and either play the action (if no-one can block or counteract it), or move
