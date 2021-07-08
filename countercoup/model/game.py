@@ -294,6 +294,9 @@ class Game:
 
                 # If the counteraction failed, see if the other players (if there are any) can counteract
                 self.__lose_card(self.counteract_player)
+
+            self.history.append(self.current_history)
+            self.current_history = None
         else:
             self.current_player = self.__next_player(self.current_player)
 
@@ -370,8 +373,6 @@ class Game:
             if self.lose_card_state == DecideToBlock:
                 self.__determine_counteract()
             elif self.lose_card_state in [SelectAction, DecideToBlockCounteract]:
-                self.history.append(self.current_history)
-                self.current_history = None
                 self.action_player = self.__next_player(self.action_player)
                 self.current_player = self.action_player
                 self.state = SelectAction
