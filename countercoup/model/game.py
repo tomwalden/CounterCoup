@@ -68,6 +68,7 @@ class Game:
 
         if self.current_action == Exchange:
             self.state = SelectCardsToDiscard
+            self.current_player = self.action_player
         else:
             self.state = SelectAction
             self.action_player = self.__next_player(self.action_player)
