@@ -73,7 +73,7 @@ class Trainer:
         """
         self.iteration += 1
 
-        for player in range(1, self.num_of_player + 1):
+        for player in range(0, self.num_of_player):
             for k in range(self.num_of_traversals):
                 self.traverse(Game(self.num_of_player), player)
 
@@ -110,7 +110,7 @@ class Trainer:
 
             if game.current_player == curr_play:
                 if game.state == SelectAction:
-                    strategy = self.get_regret_strategy(self.action_nets[curr_play - 1]
+                    strategy = self.get_regret_strategy(self.action_nets[curr_play]
                                                         , infoset
                                                         , self.get_actions(game))
 
@@ -126,12 +126,12 @@ class Trainer:
 
                     return self.calculate_regrets(values
                                                   , strategy
-                                                  , self.action_mem[curr_play - 1]
+                                                  , self.action_mem[curr_play]
                                                   , infoset
                                                   , ActionNet.create_train_data)
 
                 elif game.state == DecideToBlock:
-                    strategy = self.get_regret_strategy(self.block_nets[curr_play - 1], infoset)
+                    strategy = self.get_regret_strategy(self.block_nets[curr_play], infoset)
 
                     choice = sample(strategy.keys(), 1)[0]
                     game.decide_to_block(choice)
@@ -139,12 +139,12 @@ class Trainer:
 
                     return self.calculate_regrets(values
                                                   , strategy
-                                                  , self.block_mem[curr_play - 1]
+                                                  , self.block_mem[curr_play]
                                                   , infoset
                                                   , BlockCounteractNet.create_train_data)
 
                 elif game.state == DecideToCounteract:
-                    strategy = self.get_regret_strategy(self.counteract_nets[curr_play - 1], infoset)
+                    strategy = self.get_regret_strategy(self.counteract_nets[curr_play], infoset)
 
                     choice = sample(strategy.keys(), 1)[0]
                     game.decide_to_counteract(choice)
@@ -152,12 +152,12 @@ class Trainer:
 
                     return self.calculate_regrets(values
                                                   , strategy
-                                                  , self.counteract_mem[curr_play - 1]
+                                                  , self.counteract_mem[curr_play]
                                                   , infoset
                                                   , BlockCounteractNet.create_train_data)
 
                 elif game.state == DecideToBlockCounteract:
-                    strategy = self.get_regret_strategy(self.block_nets[curr_play - 1], infoset)
+                    strategy = self.get_regret_strategy(self.block_nets[curr_play], infoset)
 
                     choice = sample(strategy.keys(), 1)[0]
                     game.decide_to_block_counteract(choice)
@@ -165,12 +165,12 @@ class Trainer:
 
                     return self.calculate_regrets(values
                                                   , strategy
-                                                  , self.block_mem[curr_play - 1]
+                                                  , self.block_mem[curr_play]
                                                   , infoset
                                                   , BlockCounteractNet.create_train_data)
 
                 elif game.state == SelectCardsToDiscard:
-                    strategy = self.get_regret_strategy(self.lose_nets[curr_play - 1]
+                    strategy = self.get_regret_strategy(self.lose_nets[curr_play]
                                                         , infoset
                                                         , Hand.get_all_hands(game.get_curr_player().cards))
 
@@ -183,13 +183,13 @@ class Trainer:
 
                     return self.calculate_regrets(values
                                                   , strategy
-                                                  , self.lose_mem[curr_play - 1]
+                                                  , self.lose_mem[curr_play]
                                                   , infoset
                                                   , LoseNet.create_train_data)
 
                 elif game.state == SelectCardToLose:
                     lose_hand = [Hand([game.get_curr_player().cards[0]]), Hand([game.get_curr_player().cards[1]])]
-                    strategy = self.get_regret_strategy(self.lose_nets[curr_play - 1], infoset, lose_hand)
+                    strategy = self.get_regret_strategy(self.lose_nets[curr_play], infoset, lose_hand)
 
                     choice = sample(strategy.keys(), 1)[0]
                     game.select_card_to_lose(choice.card1)
@@ -197,13 +197,13 @@ class Trainer:
 
                     return self.calculate_regrets(values
                                                   , strategy
-                                                  , self.lose_mem[curr_play - 1]
+                                                  , self.lose_mem[curr_play]
                                                   , infoset
                                                   , LoseNet.create_train_data)
 
             else:
                 if game.state == SelectAction:
-                    strategy = self.get_regret_strategy(self.action_nets[game.current_player - 1]
+                    strategy = self.get_regret_strategy(self.action_nets[game.current_player]
                                                         , infoset
                                                         , self.get_actions(game))
                     self.action_strategy_mem.add(ActionNet.create_train_data(infoset, strategy, self.iteration))
@@ -218,7 +218,7 @@ class Trainer:
                     return self.traverse(game, curr_play)
 
                 elif game.state == DecideToBlock:
-                    strategy = self.get_regret_strategy(self.block_nets[game.current_player - 1], infoset)
+                    strategy = self.get_regret_strategy(self.block_nets[game.current_player], infoset)
                     self.block_strategy_mem.add(BlockCounteractNet.create_train_data(infoset, strategy, self.iteration))
 
                     choice = Tools.select_from_strategy(strategy)
@@ -228,7 +228,7 @@ class Trainer:
                     return self.traverse(game, curr_play)
 
                 elif game.state == DecideToCounteract:
-                    strategy = self.get_regret_strategy(self.counteract_nets[game.current_player - 1], infoset)
+                    strategy = self.get_regret_strategy(self.counteract_nets[game.current_player], infoset)
                     self.counteract_strategy_mem.add(BlockCounteractNet.create_train_data(infoset, strategy, self.iteration))
 
                     choice = Tools.select_from_strategy(strategy)
@@ -238,7 +238,7 @@ class Trainer:
                     return self.traverse(game, curr_play)
 
                 elif game.state == DecideToBlockCounteract:
-                    strategy = self.get_regret_strategy(self.block_nets[game.current_player - 1], infoset)
+                    strategy = self.get_regret_strategy(self.block_nets[game.current_player], infoset)
                     self.block_strategy_mem.add(BlockCounteractNet.create_train_data(infoset, strategy, self.iteration))
 
                     choice = Tools.select_from_strategy(strategy)
@@ -248,7 +248,7 @@ class Trainer:
                     return self.traverse(game, curr_play)
 
                 elif game.state == SelectCardsToDiscard:
-                    strategy = self.get_regret_strategy(self.lose_nets[game.current_player - 1]
+                    strategy = self.get_regret_strategy(self.lose_nets[game.current_player]
                                                         , infoset
                                                         , Hand.get_all_hands(game.get_curr_player().cards))
                     self.lose_strategy_mem.add(LoseNet.create_train_data(infoset, strategy, self.iteration))
@@ -261,7 +261,7 @@ class Trainer:
 
                 elif game.state == SelectCardToLose:
                     lose_hand = [Hand([game.get_curr_player().cards[0]]), Hand([game.get_curr_player().cards[1]])]
-                    strategy = self.get_regret_strategy(self.lose_nets[game.current_player - 1]
+                    strategy = self.get_regret_strategy(self.lose_nets[game.current_player]
                                                         , infoset
                                                         , lose_hand)
                     self.lose_strategy_mem.add(LoseNet.create_train_data(infoset, strategy, self.iteration))
