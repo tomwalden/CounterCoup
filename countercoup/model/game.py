@@ -286,6 +286,10 @@ class Game:
                 self.get_counteract_player().cards.remove(c_action_card)
                 self.get_counteract_player().cards.append(self.deck.pop(0))
 
+                # History complete, can move it into list
+                self.history.append(self.current_history)
+                self.current_history = None
+
                 self.__lose_card(self.current_player)
 
             else:
@@ -295,8 +299,6 @@ class Game:
                 # If the counteraction failed, see if the other players (if there are any) can counteract
                 self.__lose_card(self.counteract_player)
 
-            self.history.append(self.current_history)
-            self.current_history = None
         else:
             self.current_player = self.__next_player(self.current_player)
 
