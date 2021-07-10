@@ -38,10 +38,17 @@ class Hand:
 
         return set([Hand(x) for x in combinations(cards, 2)])
 
+    @staticmethod
+    def get_singular_hands(cards: []) -> {}:
+        """
+        Return possible singular hands
+        :param cards: the cards that the player has
+        :return: the singular hands
+        """
 
+        hands = set()
 
+        for c in cards:
+            hands.add(Hand([c]))
 
-
-
-
-
+        return hands
