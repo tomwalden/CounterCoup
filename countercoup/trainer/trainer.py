@@ -28,12 +28,10 @@ class Trainer:
 
         self.action_nets = None
         self.action_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
-        self.action_strategy_net = ActionNet()
         self.action_strategy_mem = Memory(self.memory_size)
 
         self.block_nets = None
         self.block_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
-        self.block_strategy_net = BlockCounteractNet()
         self.block_strategy_mem = Memory(self.memory_size)
 
         self.counteract_nets = None
@@ -43,7 +41,6 @@ class Trainer:
 
         self.lose_nets = None
         self.lose_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
-        self.lose_strategy_net = LoseNet()
         self.lose_strategy_mem = Memory(self.memory_size)
 
         self.strategy_nets = NetworkGroup()
@@ -112,7 +109,7 @@ class Trainer:
                 if game.state == SelectAction:
                     strategy = self.get_regret_strategy(self.action_nets[curr_play]
                                                         , infoset
-                                                        , self.get_actions(game))
+                                                        , Tools.get_actions(game))
 
                     for x in sample(strategy.keys(), min(3, len(strategy))):
                         next_game = deepcopy(game)
@@ -188,7 +185,7 @@ class Trainer:
                                                   , LoseNet.create_train_data)
 
                 elif game.state == SelectCardToLose:
-                    lose_hand = [Hand([game.get_curr_player().cards[0]]), Hand([game.get_curr_player().cards[1]])]
+                    lose_hand = Hand.get_singular_hands(game.get_curr_player().cards)
                     strategy = self.get_regret_strategy(self.lose_nets[curr_play], infoset, lose_hand)
 
                     choice = sample(strategy.keys(), 1)[0]
@@ -205,7 +202,7 @@ class Trainer:
                 if game.state == SelectAction:
                     strategy = self.get_regret_strategy(self.action_nets[game.current_player]
                                                         , infoset
-                                                        , self.get_actions(game))
+                                                        , Tools.get_actions(game))
                     self.action_strategy_mem.add(ActionNet.create_train_data(infoset, strategy, self.iteration))
 
                     choice = Tools.select_from_strategy(strategy)
@@ -260,7 +257,7 @@ class Trainer:
                     return self.traverse(game, curr_play)
 
                 elif game.state == SelectCardToLose:
-                    lose_hand = [Hand([game.get_curr_player().cards[0]]), Hand([game.get_curr_player().cards[1]])]
+                    lose_hand = Hand.get_singular_hands(game.get_curr_player().cards)
                     strategy = self.get_regret_strategy(self.lose_nets[game.current_player]
                                                         , infoset
                                                         , lose_hand)
@@ -298,13 +295,16 @@ class Trainer:
         for x in values:
             instr_regret += strategy[x] * values[x]
 
-        # Scale the instantaneous regret by the inverse of the fraction of actions selected
-        instr_regret *= len(strategy) / len(values)
+        # Calculate the scale factor - for robust sampling, it is the inverse of the fraction of actions selected
+        scale_factor = len(strategy) / len(values)
+
+        # Scale the instantaneous regret by the scale factor
+        instr_regret *= scale_factor
 
         new_regrets = {}
         for x in strategy:
             if x in values:
-                new_regrets[x] = values[x] - instr_regret
+                new_regrets[x] = (values[x] * scale_factor) - instr_regret
             else:
                 new_regrets[x] = 0 - instr_regret
 
