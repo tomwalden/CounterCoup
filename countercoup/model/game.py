@@ -6,6 +6,7 @@ from countercoup.model.items.cards import Captain, Assassin, Contessa, Duke, Amb
 from countercoup.model.items.states import SelectAction, DecideToBlock, DecideToCounteract, SelectCardsToDiscard\
     , GameFinished, DecideToBlockCounteract, SelectCardToLose
 from countercoup.model.items.actions import Income, ForeignAid, Coup, Tax, Assassinate, Exchange, Steal
+from countercoup.model.history import History
 from random import shuffle
 
 
@@ -20,7 +21,6 @@ class Game:
 
         self.deck = [Duke, Contessa, Captain, Assassin, Ambassador] * 3
         shuffle(self.deck)
-        self.discard = []
 
         for x in range(num_of_players):
             p = Player()
@@ -37,6 +37,9 @@ class Game:
         self.counteract_card = None
         self.lose_card_state = None
         self.lose_card_player = None
+
+        self.history = []
+        self.current_history = None
 
     def __next_player(self, player_id):
         """
@@ -57,16 +60,15 @@ class Game:
         Play the current action, and either move to the next player or end the game
         """
 
-        current_player = self.players[self.action_player]
+        current_player = self.get_action_player()
         attack_player = None
 
         if self.attack_player is not None:
             attack_player = self.players[self.attack_player]
 
-        current_player.coins -= self.current_action.cost
-
         if self.current_action == Exchange:
             self.state = SelectCardsToDiscard
+            self.current_player = self.action_player
         else:
             self.state = SelectAction
             self.action_player = self.__next_player(self.action_player)
@@ -90,8 +92,52 @@ class Game:
             current_player.cards.append(self.deck.pop(0))
             current_player.cards.append(self.deck.pop(0))
 
+        self.history.append(self.current_history)
+        self.current_history = None
         self.current_action = None
         self.attack_player = None
+        self.counteract_player = None
+
+    def get_curr_player(self):
+        """
+        Get the current player
+        :return: the current player
+        """
+        return self.players[self.current_player]
+
+    def get_action_player(self):
+        """
+        Get the action player
+        :return: the action player
+        """
+        return self.players[self.action_player]
+
+    def get_counteract_player(self):
+        """
+        Get the counteract player
+        :return: the counteract player
+        """
+        return self.players[self.counteract_player]
+
+    def get_opponents(self):
+        """
+        Return a list of opponents to the current player
+        :return: the list of opponents
+        """
+
+        output = []
+        for n in range(len(self.players)):
+            if n != self.current_player:
+                output.append(n)
+
+        return output
+
+    def get_game_length(self):
+        """
+        Get the length of the game so far
+        :return: the number of rounds in the game
+        """
+        return len(self.history)
 
     def select_action(self, action: Action, attack_player: int = None):
         """
@@ -105,20 +151,30 @@ class Game:
             raise IllegalMoveException("Not at correct state to play this")
 
         # If we don't have enough coins, we can't play the action
-        if self.players[self.action_player].coins - action.cost < 0:
+        if self.get_action_player().coins - action.cost < 0:
             raise IllegalMoveException("Too few coins to play this action")
 
         # If we have ten or more coins, we can only Coup
-        if self.players[self.current_player].coins >= 10 and action != Coup:
+        if self.get_action_player().coins >= 10 and action != Coup:
             raise IllegalMoveException("Too many coins, can only Coup")
 
         self.current_action = action
 
-        if action in [Coup, Assassinate, Steal]:
+        self.current_history = History()
+        self.current_history.action = action
+        self.current_history.action_player = self.current_player
+
+        if action.attack_action:
             if attack_player is None:
                 raise IllegalMoveException("Need attacked player for this action")
+            elif not self.players[attack_player].in_game:
+                raise IllegalMoveException("Attacked player not in game")
             else:
                 self.attack_player = attack_player
+                self.current_history.attacking_player = attack_player
+
+        # Player pays up even if the action is unsuccessful.
+        self.get_curr_player().coins -= self.current_action.cost
 
         # If the current action cannot be blocked or counteracted, then jump straight to playing the action
         if action.c_action_cards == [] and action.action_card is None:
@@ -145,19 +201,23 @@ class Game:
         # If the current player doesn't think that they have the card...
         if decision:
             action_card = self.current_action.action_card
+            self.current_history.blocking_player = self.current_player
 
-            if action_card in self.players[self.action_player].cards:
+            if action_card in self.get_action_player().cards:
                 # The block was unsuccessful - the challenging player loses a card
-                self.__lose_card(self.current_player)
+                self.current_history.block_successful = False
 
                 # If the block was incorrect, then we need to discard the action card and draw a new card
-                # The existing action will continue, however
+                # The existing action will continue, however.
                 self.deck.append(action_card)
                 shuffle(self.deck)
-                self.players[self.action_player].cards.remove(action_card)
-                self.players[self.action_player].cards.append(self.deck.pop(0))
+                self.get_action_player().cards.remove(action_card)
+                self.get_action_player().cards.append(self.deck.pop(0))
 
+                self.__lose_card(self.current_player)
             else:
+                # Block successful. Nice job!
+                self.current_history.block_successful = True
                 self.state = SelectAction
 
                 self.__lose_card(self.action_player)
@@ -174,11 +234,14 @@ class Game:
         """
 
         if not self.current_action.c_action_cards:
+            # No counteraction for the current action - play the action
             self.__play_action()
         elif self.attack_player is not None:
+            # Attacking actions are only counteracted by the player thats being attacked
             self.state = DecideToCounteract
             self.current_player = self.attack_player
         else:
+            # Foreign aid can be blocked by anyone claiming a Duke, so go round everyone
             self.state = DecideToCounteract
             self.current_player = self.__next_player(self.action_player)
 
@@ -192,7 +255,10 @@ class Game:
             raise IllegalMoveException("Not at correct state to play this")
 
         if decision:
+            # Current player has decided to counteract the action. Now check to see if someone wants
+            # to block the counteraction
             self.state = DecideToBlockCounteract
+            self.current_history.counteracting_player = self.current_player
             self.counteract_player = self.current_player
             self.current_player = self.__next_player(self.current_player)
         else:
@@ -212,29 +278,45 @@ class Game:
             raise IllegalMoveException("Not at correct state to play this")
 
         if decision:
-            if [x for x in self.players[self.counteract_player].cards if x in self.current_action.c_action_cards]:
+            self.current_history.counteract_player = self.current_player
+            both_cards = [x for x in self.get_counteract_player().cards if x in self.current_action.c_action_cards]
+
+            if both_cards:
 
                 # TODO: we should allow the model to select the card to get rid of, if the counteracting player
                 # has both the Ambassador and Captain
-                c_action_card = self.current_action.c_action_cards[0]
+                c_action_card = both_cards[0]
+                self.current_history.counteract_block_successful = False
 
                 self.deck.append(c_action_card)
                 shuffle(self.deck)
-                self.players[self.counteract_player].cards.remove(c_action_card)
-                self.players[self.counteract_player].cards.append(self.deck.pop(0))
+                self.get_counteract_player().cards.remove(c_action_card)
+                self.get_counteract_player().cards.append(self.deck.pop(0))
+
+                # History complete, can move it into list
+                self.history.append(self.current_history)
+                self.current_history = None
 
                 self.__lose_card(self.current_player)
 
             else:
                 self.state = DecideToCounteract
+                self.current_history.counteract_block_successful = True
+
                 # If the counteraction failed, see if the other players (if there are any) can counteract
                 self.__lose_card(self.counteract_player)
+
         else:
             self.current_player = self.__next_player(self.current_player)
 
             if self.current_player == self.counteract_player:
                 # No blocks, counteraction successful. Move to next player
+                self.history.append(self.current_history)
+                self.current_history = None
+
                 self.state = SelectAction
+                self.current_action = None
+                self.counteract_player = None
                 self.action_player = self.__next_player(self.action_player)
                 self.current_player = self.action_player
 
@@ -279,21 +361,23 @@ class Game:
         if self.state != SelectCardToLose:
             raise IllegalMoveException("Not at correct state to play this")
 
-        if card not in self.players[self.current_player].cards:
+        if card not in self.get_curr_player().cards:
             raise IllegalMoveException("You can't lose a card you don't already have")
 
-        self.players[self.current_player].cards.remove(card)
-        self.discard.append(card)
+        self.get_curr_player().cards.remove(card)
+        self.get_curr_player().discard.append(card)
 
         # If the cards are empty for the player, the player is out of the game
-        if not self.players[self.current_player].cards:
-            self.players[self.current_player].in_game = False
+        if not self.get_curr_player().cards:
+            self.get_curr_player().in_game = False
 
         # If all the players except one are out, that player has won!
         winner = self.__determine_winner()
         if winner is not None:
             self.state = GameFinished
             self.winning_player = winner
+            self.history.append(self.current_history)
+            self.current_history = None
         else:
             if self.lose_card_state == DecideToBlock:
                 self.__determine_counteract()
@@ -301,6 +385,7 @@ class Game:
                 self.action_player = self.__next_player(self.action_player)
                 self.current_player = self.action_player
                 self.state = SelectAction
+                self.counteract_player = None
             elif self.lose_card_state == DecideToCounteract:
                 if self.attack_player is not None or self.__next_player(self.counteract_player) == self.action_player:
                     self.__play_action()
@@ -321,13 +406,13 @@ class Game:
         if self.state != SelectCardsToDiscard:
             raise IllegalMoveException("Not at correct state to play this")
 
-        if card1 not in self.players[self.action_player].cards or card2 not in self.players[self.action_player].cards:
+        if card1 not in self.get_action_player().cards or card2 not in self.get_action_player().cards:
             raise IllegalMoveException("You can't lose a card you don't already have")
 
-        self.players[self.action_player].cards.remove(card1)
+        self.get_action_player().cards.remove(card1)
         self.deck.append(card1)
 
-        self.players[self.action_player].cards.remove(card2)
+        self.get_action_player().cards.remove(card2)
         self.deck.append(card2)
 
         self.state = SelectAction
