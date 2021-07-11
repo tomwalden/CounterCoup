@@ -317,31 +317,3 @@ class Trainer:
         memory.add(output_formatter(infoset, new_regrets, self.iteration))
 
         return instr_regret
-
-    @staticmethod
-    def get_actions(g: Game):
-        """
-        Returns available actions for the current player, assuming that we're at the SelectAction state
-        :param g: the Coup game
-        :return: a list of tuples of allowable actions
-        """
-
-        act_actions = []
-        act = [Income, ForeignAid, Coup, Tax, Assassinate, Exchange, Steal]
-
-        opponents = g.get_opponents()
-
-        if g.players[g.action_player].coins >= 10:
-            act = [Coup]
-
-        for x in act:
-            if g.players[g.action_player].coins >= x.cost:
-                if x.attack_action:
-                    for p in range(len(opponents)):
-                        if g.players[opponents[p]].in_game:
-                            act_actions.append((x, p))
-                else:
-                    act_actions.append((x, None))
-
-        return act_actions
-
