@@ -11,8 +11,12 @@ class Network:
     final_activation = 'relu'
     model = None
 
-    def __init__(self):
-        self.__define_structure()
+    def __init__(self, file_path: str = None):
+
+        if file_path is not None:
+            self.load(file_path)
+        else:
+            self.__define_structure()
 
     def get_output(self, infoset: Infoset, filt: iter = None) -> dict:
         """
@@ -66,6 +70,20 @@ class Network:
             [fixed_input, history_curr_play_input, history_play_1_input, history_play_2_input, history_play_3_input],
             output)
         self.model.compile(loss='mean_squared_error', optimizer='adam')
+
+    def save(self, file_path: str):
+        """
+        Save the network to disk
+        :param file_path: the path to save the net to
+        """
+        self.model.save(file_path)
+
+    def load(self, file_path: str):
+        """
+        Load a network
+        :param file_path: the path to load the net from
+        """
+        self.model = load_model(file_path)
 
     @classmethod
     def create_train_data(cls, iput: Infoset, output: dict, iteration: int) -> tuple:
