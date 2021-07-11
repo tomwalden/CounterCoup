@@ -1,4 +1,4 @@
-from countercoup.trainer.network import Network
+from countercoup.shared.network import Network
 
 
 class BlockCounteractNet(Network):

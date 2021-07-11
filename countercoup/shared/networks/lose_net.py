@@ -1,4 +1,4 @@
-from countercoup.trainer.network import Network
+from countercoup.shared.network import Network
 from countercoup.model.hand import Hand
 from countercoup.model.items.cards import Duke, Assassin, Ambassador, Captain, Contessa
 
