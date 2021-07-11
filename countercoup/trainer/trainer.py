@@ -3,10 +3,11 @@ from countercoup.model.hand import Hand
 from countercoup.model.items.actions import Income, ForeignAid, Coup, Tax, Assassinate, Exchange, Steal
 from countercoup.model.items.states import SelectAction, DecideToBlock, DecideToCounteract, SelectCardsToDiscard\
     , GameFinished, DecideToBlockCounteract, SelectCardToLose
-from countercoup.trainer.networks.ActionNet import ActionNet
-from countercoup.trainer.networks.BlockCounteractNet import BlockCounteractNet
-from countercoup.trainer.networks.LoseNet import LoseNet
-from countercoup.trainer.network import Network
+from countercoup.shared.networks.action_net import ActionNet
+from countercoup.shared.networks.block_counteract_net import BlockCounteractNet
+from countercoup.shared.networks.lose_net import LoseNet
+from countercoup.shared.network import Network
+from countercoup.shared.net_group import NetworkGroup
 from countercoup.trainer.memory import Memory
 from countercoup.shared.infoset import Infoset
 from countercoup.shared.tools import Tools
@@ -45,6 +46,8 @@ class Trainer:
         self.lose_strategy_net = LoseNet()
         self.lose_strategy_mem = Memory(self.memory_size)
 
+        self.strategy_nets = NetworkGroup()
+
         self.init_advantage_nets()
 
     def init_advantage_nets(self):
@@ -79,15 +82,6 @@ class Trainer:
 
         self.init_advantage_nets()
         self.train_advantage_nets()
-
-    def train_strategy_networks(self):
-        """
-        Train the strategy networks, at the end
-        """
-        self.action_strategy_net.train(self.action_strategy_mem)
-        self.block_strategy_net.train(self.block_strategy_mem)
-        self.counteract_strategy_nets.train(self.counteract_strategy_mem)
-        self.lose_strategy_net.train(self.lose_strategy_mem)
 
     def traverse(self, game: Game, curr_play: int):
         """
