@@ -68,7 +68,7 @@ class Traverser:
                                                         , infoset
                                                         , Tools.get_actions(game))
 
-                    for x in sample(strategy.keys(), min(3, len(strategy))):
+                    for x in sample(strategy.keys(), min(3 if game.get_game_length() < 16 else 1, len(strategy))):
                         next_game = deepcopy(game)
 
                         if x[0].attack_action:
@@ -129,7 +129,7 @@ class Traverser:
                                                         , Hand.get_all_hands(game.get_curr_player().cards))
 
                     # For Exchange, select 2 possible discard selections
-                    for x in sample(strategy.keys(), min(2, len(strategy))):
+                    for x in sample(strategy.keys(), min(2 if game.get_game_length() < 16 else 1, len(strategy))):
                         next_game = deepcopy(game)
 
                         next_game.select_cards_to_discard(x.card1, x.card2)
