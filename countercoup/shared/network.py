@@ -1,5 +1,5 @@
 from countercoup.shared.infoset import Infoset
-from countercoup.trainer.memory import Memory
+from countercoup.shared.memory import Memory
 from keras.models import Model, load_model
 from keras.layers import Dense, LSTM, Concatenate, Input
 
