@@ -24,3 +24,11 @@ class Memory:
             i = randint(0, self.counter)
             if i < self.size:
                 self.data[i] = item
+
+    def add_bulk(self, items: []):
+        """
+        Add many items to the reservoir
+        :param items: the [item] being added
+        """
+        for x in items:
+            self.add(x)
