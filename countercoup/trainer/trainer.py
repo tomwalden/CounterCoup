@@ -7,6 +7,8 @@ from countercoup.shared.memory import Memory
 from countercoup.trainer.traverser import Traverser
 from multiprocessing import Queue, Process
 
+import logging
+
 
 class Trainer:
     """
@@ -95,15 +97,15 @@ class Trainer:
             x = output_queue.get()
 
             for p in range(self.num_of_player):
-                self.action_mem[p].add_bulk(x.action_mem)
-                self.block_mem[p].add_bulk(x.block_mem)
-                self.counteract_mem[p].add_bulk(x.counteract_mem)
-                self.lose_mem[p].add_bulk(x.lose_mem)
+                self.action_mem[p].add_bulk(x[0])
+                self.block_mem[p].add_bulk(x[1])
+                self.counteract_mem[p].add_bulk(x[2])
+                self.lose_mem[p].add_bulk(x[3])
 
-            self.action_strategy_mem.add_bulk(x.action_strategy_mem)
-            self.block_strategy_mem.add_bulk(x.block_strategy_mem)
-            self.counteract_strategy_mem.add_bulk(x.counteract_strategy_mem)
-            self.lose_strategy_mem.add_bulk(x.lose_strategy_mem)
+            self.action_strategy_mem.add_bulk(x[4])
+            self.block_strategy_mem.add_bulk(x[5])
+            self.counteract_strategy_mem.add_bulk(x[6])
+            self.lose_strategy_mem.add_bulk(x[7])
 
         self.init_advantage_nets()
         self.train_advantage_nets()
@@ -113,4 +115,11 @@ class Trainer:
         while not input_queue.empty():
             p = input_queue.get()
             traverser.traverse(Game(num_of_players), p)
-        output_queue.put(traverser)
+        output_queue.put((traverser.action_mem
+                          , traverser.block_mem
+                          , traverser.counteract_mem
+                          , traverser.lose_mem
+                          , traverser.action_strategy_mem
+                          , traverser.block_strategy_mem
+                          , traverser.counteract_strategy_mem
+                          , traverser.lose_strategy_mem))
