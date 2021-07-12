@@ -1,18 +1,10 @@
 from countercoup.model.game import Game
-from countercoup.model.hand import Hand
-from countercoup.model.items.states import SelectAction, DecideToBlock, DecideToCounteract, SelectCardsToDiscard\
-    , GameFinished, DecideToBlockCounteract, SelectCardToLose
 from countercoup.shared.networks.action_net import ActionNet
 from countercoup.shared.networks.block_counteract_net import BlockCounteractNet
 from countercoup.shared.networks.lose_net import LoseNet
-from countercoup.shared.network import Network
 from countercoup.shared.net_group import NetworkGroup
 from countercoup.shared.memory import Memory
 from countercoup.trainer.traverser import Traverser
-from countercoup.shared.infoset import Infoset
-from countercoup.shared.tools import Tools
-from copy import deepcopy
-from random import sample
 from multiprocessing import Queue, Process
 
 
@@ -74,14 +66,14 @@ class Trainer:
         """
         self.iteration += 1
 
-        queue = Queue()
+        input_queue = Queue()
+        output_queue = Queue()
 
         for k in range(self.num_of_traversals):
             for p in range(self.num_of_player):
-                queue.put(p)
+                input_queue.put(p)
 
         processes = []
-        traversers = []
 
         for x in range(num_of_processes):
             traverser = Traverser(self.action_nets
@@ -89,15 +81,19 @@ class Trainer:
                                   , self.counteract_nets
                                   , self.lose_nets
                                   , self.iteration)
-            traversers.append(traverser)
-            processes.append(Process(target=self.run_process, args=(queue, traverser, self.num_of_player)))
+            processes.append(Process(target=self.run_process, args=(input_queue
+                                                                    , output_queue
+                                                                    , traverser
+                                                                    , self.num_of_player)))
             processes[x].start()
 
         # Now wait for all the tree traversals to finish
         for x in processes:
             x.join()
 
-        for x in traversers:
+        while not output_queue.empty():
+            x = output_queue.get()
+
             for p in range(self.num_of_player):
                 self.action_mem[p].add_bulk(x.action_mem)
                 self.block_mem[p].add_bulk(x.block_mem)
@@ -113,7 +109,8 @@ class Trainer:
         self.train_advantage_nets()
 
     @staticmethod
-    def run_process(queue: Queue, traverser: Traverser, num_of_players: int):
-        while not queue.empty():
-            p = queue.get()
+    def run_process(input_queue: Queue, output_queue: Queue, traverser: Traverser, num_of_players: int):
+        while not input_queue.empty():
+            p = input_queue.get()
             traverser.traverse(Game(num_of_players), p)
+        output_queue.put(traverser)
