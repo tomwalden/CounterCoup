@@ -93,14 +93,15 @@ class Trainer:
         for x in processes:
             x.join()
 
+        # Pull the results out of the
         while not output_queue.empty():
             x = output_queue.get()
 
             for p in range(self.num_of_player):
-                self.action_mem[p].add_bulk(x[0])
-                self.block_mem[p].add_bulk(x[1])
-                self.counteract_mem[p].add_bulk(x[2])
-                self.lose_mem[p].add_bulk(x[3])
+                self.action_mem[p].add_bulk(x[0][p])
+                self.block_mem[p].add_bulk(x[1][p])
+                self.counteract_mem[p].add_bulk(x[2][p])
+                self.lose_mem[p].add_bulk(x[3][p])
 
             self.action_strategy_mem.add_bulk(x[4])
             self.block_strategy_mem.add_bulk(x[5])
@@ -112,9 +113,11 @@ class Trainer:
 
     @staticmethod
     def run_process(input_queue: Queue, output_queue: Queue, traverser: Traverser, num_of_players: int):
+
         while not input_queue.empty():
             p = input_queue.get()
             traverser.traverse(Game(num_of_players), p)
+
         output_queue.put((traverser.action_mem
                           , traverser.block_mem
                           , traverser.counteract_mem
