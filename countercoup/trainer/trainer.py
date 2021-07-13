@@ -6,6 +6,7 @@ from countercoup.shared.net_group import NetworkGroup
 from countercoup.shared.memory import Memory
 from countercoup.trainer.traverser import Traverser
 from multiprocessing import Queue, Process
+from time import sleep
 
 import logging
 
@@ -89,24 +90,25 @@ class Trainer:
                                                                     , self.num_of_player)))
             processes[x].start()
 
-        # Now wait for all the tree traversals to finish
-        for x in processes:
-            x.join()
+        counter = 0
+        while counter < num_of_processes:
+            if output_queue.empty():
+                sleep(1)
+            else:
+                x = output_queue.get()
 
-        # Pull the results out of the
-        while not output_queue.empty():
-            x = output_queue.get()
+                for p in range(self.num_of_player):
+                    self.action_mem[p].add_bulk(x[0][p])
+                    self.block_mem[p].add_bulk(x[1][p])
+                    self.counteract_mem[p].add_bulk(x[2][p])
+                    self.lose_mem[p].add_bulk(x[3][p])
 
-            for p in range(self.num_of_player):
-                self.action_mem[p].add_bulk(x[0][p])
-                self.block_mem[p].add_bulk(x[1][p])
-                self.counteract_mem[p].add_bulk(x[2][p])
-                self.lose_mem[p].add_bulk(x[3][p])
+                self.action_strategy_mem.add_bulk(x[4])
+                self.block_strategy_mem.add_bulk(x[5])
+                self.counteract_strategy_mem.add_bulk(x[6])
+                self.lose_strategy_mem.add_bulk(x[7])
 
-            self.action_strategy_mem.add_bulk(x[4])
-            self.block_strategy_mem.add_bulk(x[5])
-            self.counteract_strategy_mem.add_bulk(x[6])
-            self.lose_strategy_mem.add_bulk(x[7])
+                counter += 1
 
         self.init_advantage_nets()
         self.train_advantage_nets()
