@@ -2,6 +2,7 @@ from countercoup.shared.infoset import Infoset
 from countercoup.shared.memory import Memory
 from keras.models import Model, load_model
 from keras.layers import Dense, LSTM, Concatenate, Input
+from numpy import array
 
 
 class Network:
@@ -105,4 +106,4 @@ class Network:
             else:
                 new_output.append(0)
 
-        return new_input, new_output, iteration
+        return new_input, array([new_output]), array([[iteration]])
