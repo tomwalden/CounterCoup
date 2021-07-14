@@ -32,8 +32,7 @@ class CounterCoup(Agent):
         return self.__norm(self.net_group.block.get_output(Infoset(g)))
 
     def get_lose_card_strategy(self, g: Game) -> dict:
-        hands = [Hand(g.get_curr_player().cards[0]), Hand(g.get_curr_player().cards[1])]
-        return self.__norm(self.net_group.lose.get_output(Infoset(g), hands))
+        return self.__norm(self.net_group.lose.get_output(Infoset(g), Hand.get_singular_hands(g.get_curr_player().cards)))
 
     def get_discard_strategy(self, g: Game) -> dict:
         return self.__norm(self.net_group.lose.get_output(Infoset(g), Hand.get_all_hands(g.get_curr_player().cards)))

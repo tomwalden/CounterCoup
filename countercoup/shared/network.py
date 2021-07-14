@@ -1,7 +1,8 @@
 from countercoup.shared.infoset import Infoset
-from countercoup.trainer.memory import Memory
+from countercoup.shared.memory import Memory
 from keras.models import Model, load_model
 from keras.layers import Dense, LSTM, Concatenate, Input
+from numpy import array
 
 
 class Network:
@@ -26,7 +27,7 @@ class Network:
         :return: a dict of possible outputs and output values
         """
 
-        result = self.model.predict([infoset.fixed_vector] + infoset.history_vectors).numpy()
+        result = self.model([infoset.fixed_vector] + infoset.history_vectors).numpy()
         output = {}
 
         for num, action in enumerate(self.outputs):
@@ -36,7 +37,7 @@ class Network:
         return output
 
     def train(self, memory: Memory, epochs: int = 10, validation_split: float = 0.1):
-        self.model.train(x=memory.data, epochs=epochs, validation_split=validation_split)
+        self.model.fit(x=memory, epochs=epochs, validation_split=validation_split)
 
     def __define_structure(self):
         """
@@ -105,4 +106,4 @@ class Network:
             else:
                 new_output.append(0)
 
-        return new_input, new_output, iteration
+        return new_input, array([new_output]), array([[iteration]])
