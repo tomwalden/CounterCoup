@@ -1,5 +1,5 @@
 from random import randint
-from tensorflow.keras.utils import Sequence
+from keras.utils.data_utils import Sequence
 
 
 class Memory(Sequence):
