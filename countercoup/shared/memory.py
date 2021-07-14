@@ -1,7 +1,8 @@
 from random import randint
+from keras.utils import Sequence
 
 
-class Memory:
+class Memory(Sequence):
     """
     Memory for the trainer, utilising reservoir sampling
     """
@@ -32,3 +33,9 @@ class Memory:
         """
         for x in items:
             self.add(x)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]

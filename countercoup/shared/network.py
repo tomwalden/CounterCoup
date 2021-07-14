@@ -36,7 +36,7 @@ class Network:
         return output
 
     def train(self, memory: Memory, epochs: int = 10, validation_split: float = 0.1):
-        self.model.fit(x=memory.data, epochs=epochs, validation_split=validation_split)
+        self.model.fit(x=memory, epochs=epochs, validation_split=validation_split)
 
     def __define_structure(self):
         """
