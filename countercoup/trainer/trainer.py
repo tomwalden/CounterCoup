@@ -39,7 +39,7 @@ class Trainer:
         self.lose_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
         self.lose_strategy_mem = Memory(self.memory_size)
 
-        self.strategy_nets = NetworkGroup()
+        self.strategy_nets = None
 
         self.init_advantage_nets()
 
@@ -62,6 +62,21 @@ class Trainer:
             self.block_nets[x].train(self.block_mem[x])
             self.counteract_nets[x].train(self.counteract_mem[x])
             self.lose_nets[x].train(self.lose_mem[x])
+
+    def perform_run(self, num_of_processes, num_of_traversals):
+        """
+        Perform a set number of traversals, and train the strategy networks
+        :param num_of_processes: number of threads to run the traversals on
+        :param num_of_traversals: number of traversals to
+        """
+        for t in range(num_of_traversals):
+            self.perform_iteration(num_of_processes)
+
+        self.strategy_nets = NetworkGroup()
+        self.strategy_nets.train_networks(self.action_strategy_mem
+                                          , self.block_strategy_mem
+                                          , self.counteract_strategy_mem
+                                          , self.lose_strategy_mem)
 
     def perform_iteration(self, num_of_processes: int = 2):
         """
