@@ -30,8 +30,7 @@ class Infoset:
         # First part of vector is the current players hand
         vec += [g.players[g.current_player].cards.count(x) for x in cards]
 
-        # Next is the discard for the other players - this also tells the NN how many cards the player
-        # has left. Single source of truth!
+        # Next is the discard for the other players
         for play_num, player in enumerate(g.players):
             if play_num != g.current_player:
                 vec += [player.discard.count(x) for x in cards]
@@ -48,15 +47,19 @@ class Infoset:
         for action in [Income, ForeignAid, Coup, Tax, Assassinate, Exchange, Steal]:
             vec.append(1 if g.current_action == action else 0)
 
-        # Action and counteraction encoding - first for current player
+        # Action, counteraction and attacking - first for current player
         vec.append(1 if g.current_player == g.action_player else 0)
         vec.append(1 if g.current_player == g.counteract_player else 0)
+        vec.append(1 if g.current_player == g.attack_player else 0)
 
-        # And for other players
+        # And for other players, including in-game flag (technically could just rely on discard, but having
+        # it explicit should make network easier to train)
         for play_num, player in enumerate(g.players):
             if play_num != g.current_player:
                 vec.append(1 if g.action_player == play_num else 0)
                 vec.append(1 if g.counteract_player == play_num else 0)
+                vec.append(1 if g.attack_player == play_num else 0)
+                vec.append(1 if g.players[play_num].in_game else 0)
 
         return array([vec])
 
