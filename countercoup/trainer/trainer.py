@@ -14,31 +14,37 @@ class Trainer:
     Overarching class for generating the neural networks needed for Deep CFR in CounterCoup
     """
 
-    def __init__(self, num_of_traversals, memory_size):
+    def __init__(self, num_of_traversals, advantage_memory_size, strategy_memory_size):
+        """
+        Set up our Trainer
+        :param num_of_traversals: number of tree traversals per player
+        :param advantage_memory_size: size of memory used to train advantage networks
+        :param strategy_memory_size: size of memory used to train strategy networks
+        """
+
         self.num_of_player = 4
         self.num_of_traversals = num_of_traversals
-        self.memory_size = memory_size
+        self.advantage_memory_size = advantage_memory_size
+        self.strategy_memory_size = strategy_memory_size
         self.iteration = 0
 
         self.action_nets = None
-        self.action_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
-        self.action_strategy_mem = Memory(self.memory_size)
+        self.action_mem = [Memory(self.advantage_memory_size) for _ in range(self.num_of_player)]
+        self.action_strategy_mem = Memory(self.strategy_memory_size)
 
         self.block_nets = None
-        self.block_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
-        self.block_strategy_mem = Memory(self.memory_size)
+        self.block_mem = [Memory(self.advantage_memory_size) for _ in range(self.num_of_player)]
+        self.block_strategy_mem = Memory(self.strategy_memory_size)
 
         self.counteract_nets = None
-        self.counteract_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
-        self.counteract_strategy_mem = Memory(self.memory_size)
+        self.counteract_mem = [Memory(self.advantage_memory_size) for _ in range(self.num_of_player)]
+        self.counteract_strategy_mem = Memory(self.strategy_memory_size)
 
         self.lose_nets = None
-        self.lose_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
-        self.lose_strategy_mem = Memory(self.memory_size)
+        self.lose_mem = [Memory(self.advantage_memory_size) for _ in range(self.num_of_player)]
+        self.lose_strategy_mem = Memory(self.strategy_memory_size)
 
         self.strategy_nets = None
-
-        self.init_advantage_nets()
 
     def init_advantage_nets(self):
         """
