@@ -1,7 +1,7 @@
 from countercoup.model.action import Action
 from countercoup.model.player import Player
 from countercoup.model.card import Card
-from countercoup.model.exceptions import IllegalMoveException
+from countercoup.model.exceptions import IllegalMoveException, IllegalGameException
 from countercoup.model.items.cards import Captain, Assassin, Contessa, Duke, Ambassador
 from countercoup.model.items.states import SelectAction, DecideToBlock, DecideToCounteract, SelectCardsToDiscard\
     , GameFinished, DecideToBlockCounteract, SelectCardToLose
@@ -16,6 +16,9 @@ class Game:
     """
 
     def __init__(self, num_of_players: int):
+
+        if num_of_players < 2 or num_of_players > 6:
+            raise IllegalGameException("Number of players must be between 2 and 6")
 
         self.players = []
 
