@@ -1,8 +1,7 @@
 from random import randint
-from keras.utils.data_utils import Sequence
 
 
-class Memory(Sequence):
+class Memory:
     """
     Memory for the trainer, utilising reservoir sampling
     """
@@ -18,13 +17,13 @@ class Memory(Sequence):
         :param item: the item being added
         """
 
-        self.counter += 1
         if self.counter < self.size:
             self.data.append(item)
         else:
             i = randint(0, self.counter)
-            if i < self.size:
+            if i < self.size - 1:
                 self.data[i] = item
+        self.counter += 1
 
     def add_bulk(self, items: []):
         """
