@@ -7,12 +7,14 @@ from countercoup.shared.memory import Memory
 from countercoup.trainer.traverser import Traverser
 from multiprocessing import Queue, Process
 from time import sleep
-
+from logging import getLogger
 
 class Trainer:
     """
     Overarching class for generating the neural networks needed for Deep CFR in CounterCoup
     """
+
+    _log = getLogger('trainer')
 
     def __init__(self, num_of_traversals, advantage_memory_size, strategy_memory_size):
         """
@@ -51,6 +53,7 @@ class Trainer:
         Set up empty advantage networks
         :return:
         """
+        self._log.info('Setting up advantage networks')
         self.action_nets = [ActionNet() for _ in range(self.num_of_player)]
         self.block_nets = [BlockCounteractNet() for _ in range(self.num_of_player)]
         self.counteract_nets = [BlockCounteractNet() for _ in range(self.num_of_player)]
@@ -60,6 +63,7 @@ class Trainer:
         """
         Train the advantage networks
         """
+        self._log.info('Training advantage networks')
         for x in range(self.num_of_player):
             self.action_nets[x].train(self.action_mem[x])
             self.block_nets[x].train(self.block_mem[x])
@@ -73,6 +77,7 @@ class Trainer:
         :param num_of_traversals: number of traversals to
         """
         for t in range(num_of_traversals):
+            self._log.info('Performing iteration {num}'.format(num=t))
             self.perform_iteration(num_of_processes)
 
         self.strategy_nets = NetworkGroup()
@@ -116,7 +121,8 @@ class Trainer:
         counter = 0
         while counter < num_of_processes:
             if output_queue.empty():
-                sleep(1)
+                self._log.info('Queue size: {size}'.format(size=input_queue.qsize()))
+                sleep(30)
             else:
                 x = output_queue.get()
 
