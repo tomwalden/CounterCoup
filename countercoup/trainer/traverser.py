@@ -253,12 +253,12 @@ class Traverser:
     def calculate_regrets(self, values: {}, strategy: {}, memory: [], infoset: Infoset, output_formatter):
         """
         Calculate the regret values (and insert them into memory)
-        :param values:
-        :param strategy:
-        :param memory:
-        :param infoset:
-        :param output_formatter:
-        :return:
+        :param values: the advantage values
+        :param strategy: the calculated strategy
+        :param memory: the memory to insert the calculated regrets into
+        :param infoset: the infoset for the game state
+        :param output_formatter: a function that formats the regret data before being inserted into the memory
+        :return: the total instr_regret
         """
 
         instr_regret = 0
@@ -282,9 +282,3 @@ class Traverser:
         memory.append(output_formatter(infoset, new_regrets, self.iteration))
 
         return instr_regret
-
-
-
-
-
-
