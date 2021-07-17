@@ -48,6 +48,8 @@ class Trainer:
 
         self.strategy_nets = None
 
+        self.init_advantage_nets()
+
     def init_advantage_nets(self):
         """
         Set up empty advantage networks

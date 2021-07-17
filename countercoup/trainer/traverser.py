@@ -237,7 +237,6 @@ class Traverser:
 
         # If we're on the first iteration, don't bother using the NNs. Speeds up this iteration, and
         # resolves issues where the networks don't zero correctly.
-        output = {}
         if self.iteration == 1:
             output = {x: 0 for x in (filt if filt is not None else network.outputs)}
         else:
