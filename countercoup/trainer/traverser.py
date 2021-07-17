@@ -226,9 +226,23 @@ class Traverser:
 
                     return self.traverse(game, curr_play)
 
-    @staticmethod
-    def get_regret_strategy(network: Network, infoset: Infoset, filt: [] = None):
-        output = network.get_output(infoset, filt)
+    def get_regret_strategy(self, network: Network, infoset: Infoset, filt: [] = None):
+        """
+        Get the strategy calculated from the advantage networks
+        :param network: the network to calculate the advantages
+        :param infoset: the infoset for the game state
+        :param filt: the outputs that we're allowed to output
+        :return: a dict of available actions and the strategy
+        """
+
+        # If we're on the first iteration, don't bother using the NNs. Speeds up this iteration, and
+        # resolves issues where the networks don't zero correctly.
+        output = {}
+        if self.iteration == 1:
+            output = {x: 0 for x in (filt if filt is not None else network.outputs)}
+        else:
+            output = network.get_output(infoset, filt)
+
         total = sum(filter(lambda x: x > 0, output.values()))
 
         if total == 0:
