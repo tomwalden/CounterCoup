@@ -10,7 +10,7 @@ class Network:
     """Base class for the neural networks used in Deep CFR"""
 
     outputs = None
-    final_activation = 'relu'
+    final_activation = 'linear'
     model = None
 
     def __init__(self, file_path: str = None):
@@ -70,12 +70,12 @@ class Network:
         concat = Concatenate(axis=1)(
             [fixed_input, hist_lstm_curr, hist_lstm_play_1, hist_lstm_play_2, hist_lstm_play_3])
 
-        dense_1 = Dense(100, activation='relu')(concat)
-        dense_2 = Dense(100, activation='relu')(dense_1)
-        dense_3 = Dense(100, activation='relu')(dense_2)
-        dense_4 = Dense(100, activation='relu')(dense_3)
-        dense_5 = Dense(100, activation='relu')(dense_4)
-        dense_6 = Dense(100, activation='relu')(dense_5)
+        dense_1 = Dense(100, activation='linear')(concat)
+        dense_2 = Dense(100, activation='linear')(dense_1)
+        dense_3 = Dense(100, activation='linear')(dense_2)
+        dense_4 = Dense(100, activation='linear')(dense_3)
+        dense_5 = Dense(100, activation='linear')(dense_4)
+        dense_6 = Dense(100, activation='linear')(dense_5)
 
         output = Dense(len(self.outputs), activation=self.final_activation)(dense_6)
 
