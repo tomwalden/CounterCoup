@@ -1,5 +1,6 @@
 from countercoup.shared.infoset import Infoset
 from countercoup.shared.memory import Memory
+from countercoup.shared.batch_memory import BatchMemory
 from keras.models import Model, load_model
 from keras.layers import Dense, LSTM, Concatenate, Input
 from numpy import array
@@ -9,7 +10,7 @@ class Network:
     """Base class for the neural networks used in Deep CFR"""
 
     outputs = None
-    final_activation = 'relu'
+    final_activation = 'linear'
     model = None
 
     def __init__(self, file_path: str = None):
@@ -19,7 +20,7 @@ class Network:
         else:
             self.__define_structure()
 
-    def get_output(self, infoset: Infoset, filt: iter = None) -> dict:
+    def get_output(self, infoset: Infoset, filt: [] = None) -> dict:
         """
         Return the predicted output from the neural network
         :param infoset: the Infoset object that forms the input
@@ -36,15 +37,26 @@ class Network:
 
         return output
 
-    def train(self, memory: Memory, epochs: int = 10, validation_split: float = 0.1):
-        self.model.fit(x=memory, epochs=epochs, validation_split=validation_split)
+    def train(self, memory: Memory, epochs: int = 10, batch_size: int = None):
+        """
+        Train the network
+        :param memory: a Memory of data to train on
+        :param epochs: number of epochs to train on
+        :param batch_size: size of each epoch
+        """
+
+        if batch_size is None:
+            batch_size = round(len(memory) / epochs)
+
+        bm = BatchMemory(memory, batch_size)
+        self.model.fit(x=bm, epochs=epochs)
 
     def __define_structure(self):
         """
         Define the basic structure of the NN
         """
 
-        fixed_input = Input(shape=(39,))
+        fixed_input = Input(shape=(46,))
         history_curr_play_input = Input(shape=(None, 12))
         history_play_1_input = Input(shape=(None, 12))
         history_play_2_input = Input(shape=(None, 12))
@@ -58,12 +70,12 @@ class Network:
         concat = Concatenate(axis=1)(
             [fixed_input, hist_lstm_curr, hist_lstm_play_1, hist_lstm_play_2, hist_lstm_play_3])
 
-        dense_1 = Dense(100, activation='relu')(concat)
-        dense_2 = Dense(100, activation='relu')(dense_1)
-        dense_3 = Dense(100, activation='relu')(dense_2)
-        dense_4 = Dense(100, activation='relu')(dense_3)
-        dense_5 = Dense(100, activation='relu')(dense_4)
-        dense_6 = Dense(100, activation='relu')(dense_5)
+        dense_1 = Dense(100, activation='linear')(concat)
+        dense_2 = Dense(100, activation='linear')(dense_1)
+        dense_3 = Dense(100, activation='linear')(dense_2)
+        dense_4 = Dense(100, activation='linear')(dense_3)
+        dense_5 = Dense(100, activation='linear')(dense_4)
+        dense_6 = Dense(100, activation='linear')(dense_5)
 
         output = Dense(len(self.outputs), activation=self.final_activation)(dense_6)
 

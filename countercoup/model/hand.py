@@ -1,4 +1,3 @@
-from countercoup.model.items.cards import Duke, Assassin, Ambassador, Captain, Contessa
 from itertools import combinations
 
 

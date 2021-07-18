@@ -7,39 +7,46 @@ from countercoup.shared.memory import Memory
 from countercoup.trainer.traverser import Traverser
 from multiprocessing import Queue, Process
 from time import sleep
-
-import logging
-
+from logging import getLogger
 
 class Trainer:
     """
     Overarching class for generating the neural networks needed for Deep CFR in CounterCoup
     """
 
-    def __init__(self, num_of_traversals, memory_size):
+    _log = getLogger('trainer')
+
+    def __init__(self, num_of_traversals, advantage_memory_size, strategy_memory_size):
+        """
+        Set up our Trainer
+        :param num_of_traversals: number of tree traversals per player
+        :param advantage_memory_size: size of memory used to train advantage networks
+        :param strategy_memory_size: size of memory used to train strategy networks
+        """
+
         self.num_of_player = 4
         self.num_of_traversals = num_of_traversals
-        self.memory_size = memory_size
+        self.advantage_memory_size = advantage_memory_size
+        self.strategy_memory_size = strategy_memory_size
         self.iteration = 0
 
         self.action_nets = None
-        self.action_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
-        self.action_strategy_mem = Memory(self.memory_size)
+        self.action_mem = [Memory(self.advantage_memory_size) for _ in range(self.num_of_player)]
+        self.action_strategy_mem = Memory(self.strategy_memory_size)
 
         self.block_nets = None
-        self.block_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
-        self.block_strategy_mem = Memory(self.memory_size)
+        self.block_mem = [Memory(self.advantage_memory_size) for _ in range(self.num_of_player)]
+        self.block_strategy_mem = Memory(self.strategy_memory_size)
 
         self.counteract_nets = None
-        self.counteract_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
-        self.counteract_strategy_nets = BlockCounteractNet()
-        self.counteract_strategy_mem = Memory(self.memory_size)
+        self.counteract_mem = [Memory(self.advantage_memory_size) for _ in range(self.num_of_player)]
+        self.counteract_strategy_mem = Memory(self.strategy_memory_size)
 
         self.lose_nets = None
-        self.lose_mem = [Memory(self.memory_size) for _ in range(self.num_of_player)]
-        self.lose_strategy_mem = Memory(self.memory_size)
+        self.lose_mem = [Memory(self.advantage_memory_size) for _ in range(self.num_of_player)]
+        self.lose_strategy_mem = Memory(self.strategy_memory_size)
 
-        self.strategy_nets = NetworkGroup()
+        self.strategy_nets = None
 
         self.init_advantage_nets()
 
@@ -48,6 +55,7 @@ class Trainer:
         Set up empty advantage networks
         :return:
         """
+        self._log.info('Setting up advantage networks')
         self.action_nets = [ActionNet() for _ in range(self.num_of_player)]
         self.block_nets = [BlockCounteractNet() for _ in range(self.num_of_player)]
         self.counteract_nets = [BlockCounteractNet() for _ in range(self.num_of_player)]
@@ -57,28 +65,48 @@ class Trainer:
         """
         Train the advantage networks
         """
+        self._log.info('Training advantage networks')
         for x in range(self.num_of_player):
             self.action_nets[x].train(self.action_mem[x])
             self.block_nets[x].train(self.block_mem[x])
             self.counteract_nets[x].train(self.counteract_mem[x])
             self.lose_nets[x].train(self.lose_mem[x])
 
+    def perform_run(self, num_of_processes, num_of_traversals):
+        """
+        Perform a set number of traversals, and train the strategy networks
+        :param num_of_processes: number of threads to run the traversals on
+        :param num_of_traversals: number of traversals to
+        """
+        for t in range(num_of_traversals):
+            self._log.info('Performing iteration {num}'.format(num=t))
+            self.perform_iteration(min([10, num_of_processes]) if self.iteration == 1 else num_of_processes)
+
+        self.strategy_nets = NetworkGroup()
+        self.strategy_nets.train_networks(self.action_strategy_mem
+                                          , self.block_strategy_mem
+                                          , self.counteract_strategy_mem
+                                          , self.lose_strategy_mem)
+
     def perform_iteration(self, num_of_processes: int = 2):
         """
         Perform one iteration of the Deep CFR algorithm
+        :param num_of_processes: number of threads to run the traversals on
         """
         self.iteration += 1
 
         input_queue = Queue()
         output_queue = Queue()
 
+        # We need one game for each player in each traversal
         for k in range(self.num_of_traversals):
             for p in range(self.num_of_player):
                 input_queue.put(p)
 
         processes = []
 
-        for x in range(num_of_processes):
+        # Spin up our processes
+        for p in range(num_of_processes):
             traverser = Traverser(self.action_nets
                                   , self.block_nets
                                   , self.counteract_nets
@@ -88,12 +116,15 @@ class Trainer:
                                                                     , output_queue
                                                                     , traverser
                                                                     , self.num_of_player)))
-            processes[x].start()
+            processes[p].start()
 
+        # Wait for each process to finish. When the results from a thread come through, add them to
+        # the memories
         counter = 0
         while counter < num_of_processes:
             if output_queue.empty():
-                sleep(1)
+                self._log.info('Queue size: {size}'.format(size=input_queue.qsize()))
+                sleep(30)
             else:
                 x = output_queue.get()
 
@@ -110,11 +141,19 @@ class Trainer:
 
                 counter += 1
 
+        # Set up and train the advantage networks
         self.init_advantage_nets()
         self.train_advantage_nets()
 
     @staticmethod
     def run_process(input_queue: Queue, output_queue: Queue, traverser: Traverser, num_of_players: int):
+        """
+        Process that runs in each thread during game tree traversal
+        :param input_queue: input queue containing traversals that need to be done
+        :param output_queue: output queue containing results from the thread
+        :param traverser: the Traverser object for this thread
+        :param num_of_players: total number of players in the game
+        """
 
         while not input_queue.empty():
             p = input_queue.get()

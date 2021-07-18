@@ -2,6 +2,9 @@ from countercoup.model.game import Game
 
 
 class Agent:
+    """
+    Base class for agents
+    """
 
     def get_action_strategy(self, g: Game) -> dict:
         pass
