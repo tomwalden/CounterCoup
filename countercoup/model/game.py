@@ -265,7 +265,7 @@ class Game:
             self.counteract_player = self.current_player
             self.current_player = self.__next_player(self.current_player)
         else:
-            if self.attack_player is not None or self.current_player == self.action_player:
+            if self.attack_player is not None or self.__next_player(self.current_player) == self.action_player:
                 self.counteract_player = None
                 self.__play_action()
             else:
