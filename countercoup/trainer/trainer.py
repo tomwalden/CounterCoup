@@ -80,7 +80,7 @@ class Trainer:
         """
         for t in range(num_of_traversals):
             self._log.info('Performing iteration {num}'.format(num=t))
-            self.perform_iteration(min([10, num_of_processes]) if self.iteration == 1 else num_of_processes)
+            self.perform_iteration(num_of_processes)
 
         self.strategy_nets = NetworkGroup()
         self.strategy_nets.train_networks(self.action_strategy_mem
