@@ -1,8 +1,9 @@
 from countercoup.shared.infoset import Infoset
 from countercoup.shared.memory import Memory
 from countercoup.shared.batch_memory import BatchMemory
+from countercoup.shared.structure import Structure
+from countercoup.shared.structures.lstm import LSTMNet
 from keras.models import Model, load_model
-from keras.layers import Dense, LSTM, Concatenate, Input
 from numpy import array
 
 
@@ -13,12 +14,14 @@ class Network:
     final_activation = 'linear'
     model = None
 
-    def __init__(self, file_path: str = None):
+    def __init__(self, file_path: str = None, structure: Structure = None):
 
         if file_path is not None:
             self.load(file_path)
+        elif structure is None:
+            self.model = LSTMNet.define_structure(self.outputs)
         else:
-            self.__define_structure()
+            self.model = structure.define_structure(self.outputs)
 
     def get_output(self, infoset: Infoset, filt: [] = None) -> dict:
         """
@@ -50,39 +53,6 @@ class Network:
 
         bm = BatchMemory(memory, batch_size)
         self.model.fit(x=bm, epochs=epochs)
-
-    def __define_structure(self):
-        """
-        Define the basic structure of the NN
-        """
-
-        fixed_input = Input(shape=(46,))
-        history_curr_play_input = Input(shape=(None, 12))
-        history_play_1_input = Input(shape=(None, 12))
-        history_play_2_input = Input(shape=(None, 12))
-        history_play_3_input = Input(shape=(None, 12))
-
-        hist_lstm_curr = LSTM(10)(history_curr_play_input)
-        hist_lstm_play_1 = LSTM(10)(history_play_1_input)
-        hist_lstm_play_2 = LSTM(10)(history_play_2_input)
-        hist_lstm_play_3 = LSTM(10)(history_play_3_input)
-
-        concat = Concatenate(axis=1)(
-            [fixed_input, hist_lstm_curr, hist_lstm_play_1, hist_lstm_play_2, hist_lstm_play_3])
-
-        dense_1 = Dense(100, activation='linear')(concat)
-        dense_2 = Dense(100, activation='linear')(dense_1)
-        dense_3 = Dense(100, activation='linear')(dense_2)
-        dense_4 = Dense(100, activation='linear')(dense_3)
-        dense_5 = Dense(100, activation='linear')(dense_4)
-        dense_6 = Dense(100, activation='linear')(dense_5)
-
-        output = Dense(len(self.outputs), activation=self.final_activation)(dense_6)
-
-        self.model = Model(
-            [fixed_input, history_curr_play_input, history_play_1_input, history_play_2_input, history_play_3_input],
-            output)
-        self.model.compile(loss='mean_squared_error', optimizer='adam')
 
     def save(self, file_path: str):
         """
