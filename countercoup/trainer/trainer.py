@@ -84,12 +84,14 @@ class Trainer:
             self._log.info('Performing iteration {num}'.format(num=t))
             self.perform_iteration(num_of_processes)
 
+        self.train_strategy_nets()
+
     def train_strategy_nets(self):
         """
         Train the strategy networks
         """
 
-        self.strategy_nets = NetworkGroup()
+        self.strategy_nets = NetworkGroup(structure=self.net_structure)
         self.strategy_nets.train_networks(self.action_strategy_mem
                                           , self.block_strategy_mem
                                           , self.counteract_strategy_mem
