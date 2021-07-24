@@ -4,6 +4,7 @@ from countercoup.shared.networks.block_counteract_net import BlockCounteractNet
 from countercoup.shared.networks.lose_net import LoseNet
 from countercoup.shared.net_group import NetworkGroup
 from countercoup.shared.memory import Memory
+from countercoup.shared.structure import Structure
 from countercoup.trainer.traverser import Traverser
 from multiprocessing import Queue, Process
 from time import sleep
@@ -16,7 +17,7 @@ class Trainer:
 
     _log = getLogger('trainer')
 
-    def __init__(self, num_of_traversals, advantage_memory_size, strategy_memory_size):
+    def __init__(self, num_of_traversals, advantage_memory_size, strategy_memory_size, structure: Structure = None):
         """
         Set up our Trainer
         :param num_of_traversals: number of tree traversals per player
@@ -47,6 +48,7 @@ class Trainer:
         self.lose_strategy_mem = Memory(self.strategy_memory_size)
 
         self.strategy_nets = None
+        self.net_structure = structure
 
         self.init_advantage_nets()
 
@@ -56,10 +58,10 @@ class Trainer:
         :return:
         """
         self._log.info('Setting up advantage networks')
-        self.action_nets = [ActionNet() for _ in range(self.num_of_player)]
-        self.block_nets = [BlockCounteractNet() for _ in range(self.num_of_player)]
-        self.counteract_nets = [BlockCounteractNet() for _ in range(self.num_of_player)]
-        self.lose_nets = [LoseNet() for _ in range(self.num_of_player)]
+        self.action_nets = [ActionNet(structure=self.net_structure) for _ in range(self.num_of_player)]
+        self.block_nets = [BlockCounteractNet(structure=self.net_structure) for _ in range(self.num_of_player)]
+        self.counteract_nets = [BlockCounteractNet(structure=self.net_structure) for _ in range(self.num_of_player)]
+        self.lose_nets = [LoseNet(structure=self.net_structure) for _ in range(self.num_of_player)]
 
     def train_advantage_nets(self):
         """
@@ -82,7 +84,14 @@ class Trainer:
             self._log.info('Performing iteration {num}'.format(num=t))
             self.perform_iteration(num_of_processes)
 
-        self.strategy_nets = NetworkGroup()
+        self.train_strategy_nets()
+
+    def train_strategy_nets(self):
+        """
+        Train the strategy networks
+        """
+
+        self.strategy_nets = NetworkGroup(structure=self.net_structure)
         self.strategy_nets.train_networks(self.action_strategy_mem
                                           , self.block_strategy_mem
                                           , self.counteract_strategy_mem

@@ -1,6 +1,7 @@
 from countercoup.shared.networks.lose_net import LoseNet
 from countercoup.shared.networks.block_counteract_net import BlockCounteractNet
 from countercoup.shared.networks.action_net import ActionNet
+from countercoup.shared.structure import Structure
 from zipfile import ZipFile
 from os import remove
 
@@ -10,15 +11,15 @@ class NetworkGroup:
     Combined group of networks used to define CounterCoup
     """
 
-    def __init__(self, file_path: str = None):
+    def __init__(self, file_path: str = None, structure: Structure = None):
 
         if file_path is not None:
             self.load(file_path)
         else:
-            self.action = ActionNet()
-            self.block = BlockCounteractNet()
-            self.counteract = BlockCounteractNet()
-            self.lose = LoseNet()
+            self.action = ActionNet(structure=structure)
+            self.block = BlockCounteractNet(structure=structure)
+            self.counteract = BlockCounteractNet(structure=structure)
+            self.lose = LoseNet(structure=structure)
 
     def train_networks(self, action_mem, block_mem, counteract_mem, lose_mem):
         """
