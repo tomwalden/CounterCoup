@@ -122,6 +122,13 @@ class Game:
         """
         return self.players[self.counteract_player]
 
+    def get_attack_player(self):
+        """
+        Get the player being attacked
+        :return: the attacked player
+        """
+        return self.players[self.attack_player]
+
     def get_opponents(self):
         """
         Return a list of opponents to the current player
@@ -236,8 +243,9 @@ class Game:
         Determine what to do when we move to the counteract stage
         """
 
-        if not self.current_action.c_action_cards:
-            # No counteraction for the current action - play the action
+        if not self.current_action.c_action_cards \
+                or (self.attack_player is not None and not self.get_attack_player().in_game):
+            # No counteraction for the current action, or the attacking player got knocked out - play the action
             self.__play_action()
         elif self.attack_player is not None:
             # Attacking actions are only counteracted by the player thats being attacked
