@@ -26,7 +26,7 @@ class CoupPlay:
         self.block_counteract_tally = [{x: 0 for x in BlockCounteractNet.outputs} for _ in agents]
         self.lose_tally = [{x: 0 for x in LoseNet.outputs} for _ in agents]
 
-        self.histories = self.tally = [[] for _ in agents]
+        self.histories = [[] for _ in agents]
 
     def run(self):
         """
