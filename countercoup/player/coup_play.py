@@ -26,6 +26,8 @@ class CoupPlay:
         self.block_counteract_tally = [{x: 0 for x in BlockCounteractNet.outputs} for _ in agents]
         self.lose_tally = [{x: 0 for x in LoseNet.outputs} for _ in agents]
 
+        self.histories = self.tally = [[] for _ in agents]
+
     def run(self):
         """
         Play a full game of Coup using the agents
@@ -83,4 +85,6 @@ class CoupPlay:
                 self.lose_tally[game.current_player][hand] += 1
 
         self.tally[game.winning_player] += 1
+        self.histories[game.winning_player].append(game.history)
+
         return game.winning_player
