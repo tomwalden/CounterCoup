@@ -183,7 +183,7 @@ class Game:
                 self.attack_player = attack_player
                 self.current_history.attacking_player = attack_player
 
-        # Player pays up even if the action is unsuccessful.
+        # Player pays up.
         self.get_curr_player().coins -= self.current_action.cost
 
         # If the current action cannot be blocked or counteracted, then jump straight to playing the action
@@ -229,6 +229,9 @@ class Game:
                 # Block successful. Nice job!
                 self.current_history.block_successful = True
                 self.state = SelectAction
+
+                # If block successful, any costs are returned to the action player
+                self.get_action_player().coins += self.current_action.cost
 
                 self.__lose_card(self.action_player)
 
