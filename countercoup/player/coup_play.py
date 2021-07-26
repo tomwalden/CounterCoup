@@ -1,6 +1,9 @@
 from countercoup.model.game import Game
 from countercoup.model.items.states import SelectAction, SelectCardToLose, SelectCardsToDiscard, \
     DecideToBlockCounteract, DecideToCounteract, DecideToBlock, GameFinished
+from countercoup.shared.networks.action_net import ActionNet
+from countercoup.shared.networks.block_counteract_net import BlockCounteractNet
+from countercoup.shared.networks.lose_net import LoseNet
 from countercoup.shared.tools import Tools
 
 
@@ -16,6 +19,12 @@ class CoupPlay:
         """
         self.agents = agents
         self.tally = [0 for _ in agents]
+
+        self.action_tally = [{x: 0 for x in ActionNet.outputs} for _ in agents]
+        self.block_tally = [{x: 0 for x in BlockCounteractNet.outputs} for _ in agents]
+        self.counteract_tally = [{x: 0 for x in BlockCounteractNet.outputs} for _ in agents]
+        self.block_counteract_tally = [{x: 0 for x in BlockCounteractNet.outputs} for _ in agents]
+        self.lose_tally = [{x: 0 for x in LoseNet.outputs} for _ in agents]
 
     def run(self):
         """
@@ -36,28 +45,42 @@ class CoupPlay:
                 else:
                     game.select_action(action[0])
 
+                self.action_tally[game.current_player][action] += 1
+
             elif game.state == DecideToBlock:
                 strategy = self.agents[game.current_player].get_block_strategy(game)
-                game.decide_to_block(Tools.select_from_strategy(strategy))
+                decision = Tools.select_from_strategy(strategy)
+                game.decide_to_block(decision)
+
+                self.block_tally[game.current_player][decision] += 1
 
             elif game.state == DecideToCounteract:
                 strategy = self.agents[game.current_player].get_counteract_strategy(game)
-                game.decide_to_counteract(Tools.select_from_strategy(strategy))
+                decision = Tools.select_from_strategy(strategy)
+                game.decide_to_counteract(decision)
+
+                self.counteract_tally[game.current_player][decision] += 1
 
             elif game.state == DecideToBlockCounteract:
                 strategy = self.agents[game.current_player].get_block_counteract_strategy(game)
-                game.decide_to_block_counteract(Tools.select_from_strategy(strategy))
+                decision = Tools.select_from_strategy(strategy)
+                game.decide_to_block_counteract(decision)
+
+                self.block_counteract_tally[game.current_player][decision] += 1
 
             elif game.state == SelectCardToLose:
                 strategy = self.agents[game.current_player].get_lose_card_strategy(game)
-                game.select_card_to_lose(Tools.select_from_strategy(strategy).card1)
+                decision = Tools.select_from_strategy(strategy)
+                game.select_card_to_lose(decision.card1)
+
+                self.lose_tally[game.current_player][decision] += 1
 
             elif game.state == SelectCardsToDiscard:
                 strategy = self.agents[game.current_player].get_discard_strategy(game)
                 hand = Tools.select_from_strategy(strategy)
                 game.select_cards_to_discard(hand.card1, hand.card2)
 
+                self.lose_tally[game.current_player][hand] += 1
+
         self.tally[game.winning_player] += 1
         return game.winning_player
-
-
