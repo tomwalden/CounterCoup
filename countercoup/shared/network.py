@@ -4,7 +4,7 @@ from countercoup.shared.batch_memory import BatchMemory
 from countercoup.shared.structure import Structure
 from countercoup.shared.structures.lstm import LSTMNet
 from keras.models import Model, load_model
-from numpy import array
+from numpy import array, int16
 
 
 class Network:
@@ -88,4 +88,4 @@ class Network:
             else:
                 new_output.append(0)
 
-        return new_input, array([new_output]), array([[iteration]])
+        return new_input, array([new_output], dtype=int16), array([[iteration]], dtype=int16)

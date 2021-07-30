@@ -1,7 +1,7 @@
 from countercoup.model.game import Game
 from countercoup.model.items.cards import Duke, Assassin, Ambassador, Captain, Contessa
 from countercoup.model.items.actions import Income, ForeignAid, Coup, Tax, Assassinate, Exchange, Steal
-from numpy import array, zeros
+from numpy import array, zeros, int16
 
 
 class Infoset:
@@ -61,7 +61,7 @@ class Infoset:
                 vec.append(1 if g.attack_player == play_num else 0)
                 vec.append(1 if g.players[play_num].in_game else 0)
 
-        return array([vec])
+        return array([vec], dtype=int16)
 
     @staticmethod
     def __return_history_vectors(g: Game):
@@ -97,12 +97,12 @@ class Infoset:
         # First LSTM cell is for current player - ensure that an empty history has the
         # correct shape
         curr_history = [x[1] for x in flat_history if x[0] == g.current_player]
-        vec = [zeros((1, 1, 12)) if not curr_history else array([curr_history])]
+        vec = [zeros((1, 1, 12), dtype=int16) if not curr_history else array([curr_history], dtype=int16)]
 
         # All other players go in
         for play_num, player in enumerate(g.players):
             if play_num != g.current_player:
                 play_history = [x[1] for x in flat_history if x[0] == play_num]
-                vec.append(zeros((1, 1, 12)) if not play_history else array([play_history]))
+                vec.append(zeros((1, 1, 12), dtype=int16) if not play_history else array([play_history], dtype=int16))
 
         return vec
