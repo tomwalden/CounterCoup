@@ -6,10 +6,9 @@ from countercoup.shared.networks.action_net import ActionNet
 from countercoup.shared.networks.block_counteract_net import BlockCounteractNet
 from countercoup.shared.networks.lose_net import LoseNet
 from countercoup.shared.network import Network
-from countercoup.shared.net_group import NetworkGroup
-from countercoup.shared.memory import Memory
 from countercoup.shared.infoset import Infoset
 from countercoup.shared.tools import Tools
+from countercoup.trainer.trainer_stats import TrainerStats
 from copy import deepcopy
 from random import sample
 
@@ -37,6 +36,8 @@ class Traverser:
         self.counteract_strategy_mem = []
         self.lose_strategy_mem = []
 
+        self.stats = TrainerStats()
+
     def traverse(self, game: Game, curr_play: int):
         """
         Traverse the Coup game tree recursively
@@ -45,12 +46,18 @@ class Traverser:
         :return: the instantaneous regret value for all histories at this prefix
         """
 
+        self.stats.total_nodes_traversed += 1
+
         # If the game is finished, then return 1 if the player won the game, else -1
         if game.state == GameFinished:
+
+            self.stats.total_terminal_nodes += 1
+
             if game.winning_player == curr_play:
                 return 1
             else:
                 return -1
+
         else:
 
             # If, for some reason the game has gone on for 50 turns, everyone declares the game
@@ -64,6 +71,8 @@ class Traverser:
 
             if game.current_player == curr_play:
                 if game.state == SelectAction:
+                    self.stats.total_turns += 1
+
                     strategy = self.get_regret_strategy(self.action_nets[curr_play]
                                                         , infoset
                                                         , Tools.get_actions(game))
@@ -157,6 +166,8 @@ class Traverser:
 
             else:
                 if game.state == SelectAction:
+                    self.stats.total_turns += 1
+
                     strategy = self.get_regret_strategy(self.action_nets[game.current_player]
                                                         , infoset
                                                         , Tools.get_actions(game))
