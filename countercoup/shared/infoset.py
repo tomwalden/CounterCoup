@@ -1,4 +1,4 @@
-from countercoup.model.game import Game
+from countercoup.model.game import GameInfoSet
 from countercoup.model.items.cards import Duke, Assassin, Ambassador, Captain, Contessa
 from countercoup.model.items.actions import Income, ForeignAid, Coup, Tax, Assassinate, Exchange, Steal
 from numpy import array, zeros, int16
@@ -10,13 +10,13 @@ class Infoset:
     a neural network
     """
 
-    def __init__(self, g: Game):
+    def __init__(self, g: GameInfoSet):
 
         self.fixed_vector = self.__return_fixed_vector(g)
         self.history_vectors = self.__return_history_vectors(g)
 
     @staticmethod
-    def __return_fixed_vector(g: Game):
+    def __return_fixed_vector(g: GameInfoSet):
         """
         Generate a vector that serializes the non-history parts of the game state
         :param g: the Game object from the model
@@ -64,7 +64,7 @@ class Infoset:
         return array([vec], dtype=int16)
 
     @staticmethod
-    def __return_history_vectors(g: Game):
+    def __return_history_vectors(g: GameInfoSet):
         """
         Return the history vectors for each player, to be fed sequentially into a recurrent neural network
         such as a LSTM cell
