@@ -7,10 +7,11 @@ from countercoup.model.items.states import SelectAction, DecideToBlock, DecideTo
     , GameFinished, DecideToBlockCounteract, SelectCardToLose
 from countercoup.model.items.actions import Income, ForeignAid, Coup, Tax, Assassinate, Exchange, Steal
 from countercoup.model.history import History
+from countercoup.model.game_info import GameInfoSet
 from random import shuffle
 
 
-class Game:
+class Game(GameInfoSet):
     """
     A complete model for the card game Coup
     """
@@ -100,54 +101,6 @@ class Game:
         self.current_action = None
         self.attack_player = None
         self.counteract_player = None
-
-    def get_curr_player(self):
-        """
-        Get the current player
-        :return: the current player
-        """
-        return self.players[self.current_player]
-
-    def get_action_player(self):
-        """
-        Get the action player
-        :return: the action player
-        """
-        return self.players[self.action_player]
-
-    def get_counteract_player(self):
-        """
-        Get the counteract player
-        :return: the counteract player
-        """
-        return self.players[self.counteract_player]
-
-    def get_attack_player(self):
-        """
-        Get the player being attacked
-        :return: the attacked player
-        """
-        return self.players[self.attack_player]
-
-    def get_opponents(self):
-        """
-        Return a list of opponents to the current player
-        :return: the list of opponents
-        """
-
-        output = []
-        for n in range(len(self.players)):
-            if n != self.current_player:
-                output.append(n)
-
-        return output
-
-    def get_game_length(self):
-        """
-        Get the length of the game so far
-        :return: the number of rounds in the game
-        """
-        return len(self.history)
 
     def select_action(self, action: Action, attack_player: int = None):
         """
