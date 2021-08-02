@@ -68,6 +68,8 @@ class OnlinePlay:
         self.complete_games = []
 
     def update_players(self, payload: []):
+        """Update the game with player names and states"""
+
         self._log.info("Updating players")
 
         if not self.game.players:
@@ -89,6 +91,8 @@ class OnlinePlay:
         self.game.current_player = self.names.index(self.bot_name)
 
     def select_action(self):
+        """Select an action and send it to the server"""
+
         strategy = self.agent.get_action_strategy(self.game)
         action = Tools.select_from_strategy(strategy)
 
@@ -105,6 +109,7 @@ class OnlinePlay:
                          , namespace=self.nspace)
 
     def decide_to_block(self, payload: []):
+        """Decide to block or not"""
 
         if self.game.current_player == self.game.action_player:
             return
@@ -130,7 +135,15 @@ class OnlinePlay:
                          , namespace=self.nspace)
 
     def choose_card_to_lose(self):
-        decision = Tools.select_from_strategy(self.agent.get_lose_card_strategy(self.game)).card1
+        """Select a card to lose, if we have to"""
+
+        strategy = self.agent.get_lose_card_strategy(self.game)
+        decision = Tools.select_from_strategy(strategy).card1
+
+        self._log.info("Selecting card to lose")
+        self._log.info("Obtained strategy: {strat}"
+                       .format(strat={self._card_map[x.card1]: strategy[x] for x in strategy}))
+        self._log.info("Decision: {dec}".format(dec=self._card_map[decision]))
 
         self.client.emit("g-chooseInfluenceDecision"
                                , {"influence": self._card_map[decision]
@@ -138,6 +151,8 @@ class OnlinePlay:
                          , namespace=self.nspace)
 
     def reveal_card(self, payload: []):
+        """When being blocked, either reveal the card we have or select a card to lose"""
+
         action = self._r_action_map[payload["action"]["action"]]
 
         # If we have the card for the action, show that. Otherwise, use the agent to decide which
@@ -145,7 +160,13 @@ class OnlinePlay:
         if action.action_card in self.game.get_curr_player().cards:
             card = action.action_card
         else:
-            card = Tools.select_from_strategy(self.agent.get_lose_card_strategy(self.game)).card1
+            strategy = self.agent.get_lose_card_strategy(self.game)
+            card = Tools.select_from_strategy(strategy).card1
+
+            self._log.info("Selecting card to lose")
+            self._log.info("Obtained strategy: {strat}"
+                           .format(strat={self._card_map[x.card1]: strategy[x] for x in strategy}))
+            self._log.info("Decision: {dec}".format(dec=self._card_map[card]))
 
         self.client.emit("g-revealDecision", {"revealedCard": self._card_map[card]
             , "prevAction": payload["action"]
@@ -156,6 +177,8 @@ class OnlinePlay:
                          , namespace=self.nspace)
 
     def choose_cards_to_discard(self, payload: []):
+        """Decide which cards to lose when Exchanging"""
+
         cards = [self._r_card_map[p] for p in payload]
         self.game.get_curr_player().cards.append(cards[0])
         self.game.get_curr_player().cards.append(cards[1])
@@ -166,7 +189,8 @@ class OnlinePlay:
         self._log.info("Selecting cards to discard")
         self._log.info("Obtained strategy: {strat}"
                        .format(strat={(self._card_map[h.card1], self._card_map[h.card2]): strategy[h] for h in strategy}))
-        self._log.info("Cards to discard: {card1}, {card2}".format(card1=decision.card1, card2=decision.card2))
+        self._log.info("Cards to discard: {card1}, {card2}"
+                       .format(card1=self._card_map[decision.card1], card2=self._card_map[decision.card2]))
 
         self.game.get_curr_player().cards.remove(decision.card1)
         self.game.get_curr_player().cards.remove(decision.card2)
@@ -178,6 +202,7 @@ class OnlinePlay:
                          , namespace=self.nspace)
 
     def decide_to_counteract(self, payload: []):
+        """Decide to counteract another players actions"""
 
         if self.game.current_player == self.game.action_player:
             return
@@ -217,6 +242,7 @@ class OnlinePlay:
                              , namespace=self.nspace)
 
     def decide_to_block_counteract(self, payload: []):
+        """Decide if to block a counteraction"""
 
         if payload["counterAction"]["source"] == self.bot_name:
             return
@@ -248,6 +274,8 @@ class OnlinePlay:
                              , namespace=self.nspace)
 
     def add_log(self, ls: str):
+        """Use the game log sent by the server to build up the game history"""
+
         self._log.info(ls)
 
         m = re.match("(\w+) used (\w+)( on (\w+))?", ls)
@@ -273,6 +301,7 @@ class OnlinePlay:
             self.game.current_history.counteract_block_successful = True if m[3] == 'succeeded' else False
 
     def update_current_player(self, payload: []):
+        """Update the action player"""
 
         self.game.action_player = self.names.index(payload)
 
@@ -282,12 +311,14 @@ class OnlinePlay:
         self.game.current_history = History()
 
     def game_over(self, payload: str):
+        """The game is over, create a new game"""
 
         self.game.winning_player = self.names.index(payload)
         self.complete_games.append(self.game)
         self.game = GameInfoSet()
 
     def leader_leaves(self, payload):
+        """If everyone leaves, end the connection"""
         self.client.disconnect()
 
     def add_handlers(self):
@@ -307,6 +338,8 @@ class OnlinePlay:
         self.client.on("leaderDisconnect", self.leader_leaves, namespace=self.nspace)
 
     def run(self):
+        """Run the client"""
+
         self.client.connect(self.uri, namespaces=[self.nspace])
 
         self.client.emit("setName", self.bot_name, namespace=self.nspace)
