@@ -6,9 +6,12 @@ from countercoup.shared.net_group import NetworkGroup
 from countercoup.shared.memory import Memory
 from countercoup.shared.structure import Structure
 from countercoup.trainer.traverser import Traverser
+from countercoup.trainer.trainer_stats import TrainerStats
 from multiprocessing import Queue, Process
 from time import sleep
 from logging import getLogger
+from csv import writer
+
 
 class Trainer:
     """
@@ -23,6 +26,7 @@ class Trainer:
         :param num_of_traversals: number of tree traversals per player
         :param advantage_memory_size: size of memory used to train advantage networks
         :param strategy_memory_size: size of memory used to train strategy networks
+        :param structure: the structure of our neural networks
         """
 
         self.num_of_player = 4
@@ -49,13 +53,13 @@ class Trainer:
 
         self.strategy_nets = None
         self.net_structure = structure
+        self.stats = dict()
 
         self.init_advantage_nets()
 
     def init_advantage_nets(self):
         """
         Set up empty advantage networks
-        :return:
         """
         self._log.info('Setting up advantage networks')
         self.action_nets = [ActionNet(structure=self.net_structure) for _ in range(self.num_of_player)]
@@ -74,17 +78,26 @@ class Trainer:
             self.counteract_nets[x].train(self.counteract_mem[x])
             self.lose_nets[x].train(self.lose_mem[x])
 
-    def perform_run(self, num_of_processes, num_of_traversals):
+    def perform_run(self, num_of_processes: int, num_of_traversals: int, save_prefix: str = None):
         """
         Perform a set number of traversals, and train the strategy networks
         :param num_of_processes: number of threads to run the traversals on
         :param num_of_traversals: number of traversals to
+        :param save_prefix: Save the strategy nets to files with this prefix if not none
         """
         for t in range(num_of_traversals):
-            self._log.info('Performing iteration {num}'.format(num=t))
+            self._log.info('Performing iteration {num}'.format(num=self.iteration + 1))
             self.perform_iteration(num_of_processes)
 
-        self.train_strategy_nets()
+            # First iteration will be close to a uniform dist - no point training!
+            if save_prefix is not None and self.iteration > 1:
+                self.train_strategy_nets()
+                self.save_strategy_nets("{prefix}_i{it}.zip".format(prefix=save_prefix, it=self.iteration - 1))
+
+        if save_prefix is not None:
+            self.save_stats("{prefix}_stats.csv".format(prefix=save_prefix))
+        else:
+            self.train_strategy_nets()
 
     def train_strategy_nets(self):
         """
@@ -103,6 +116,7 @@ class Trainer:
         :param num_of_processes: number of threads to run the traversals on
         """
         self.iteration += 1
+        self.stats[self.iteration] = TrainerStats()
 
         input_queue = Queue()
         output_queue = Queue()
@@ -148,6 +162,8 @@ class Trainer:
                 self.counteract_strategy_mem.add_bulk(x[6])
                 self.lose_strategy_mem.add_bulk(x[7])
 
+                self.stats[self.iteration].add_data(x[8])
+
                 counter += 1
 
         # Set up and train the advantage networks
@@ -175,4 +191,23 @@ class Trainer:
                           , traverser.action_strategy_mem
                           , traverser.block_strategy_mem
                           , traverser.counteract_strategy_mem
-                          , traverser.lose_strategy_mem))
+                          , traverser.lose_strategy_mem
+                          , traverser.stats.get_data()))
+
+    def save_strategy_nets(self, file_path):
+        """
+        Save the strategy nets
+        :param file_path: the path to save the nets to
+        """
+        self.strategy_nets.save(file_path)
+
+    def save_stats(self, file_path):
+        """
+        Save the statistics to a file
+        :param file_path: the path to save the statistics to
+        """
+
+        with open(file_path, 'w', newline='') as f:
+            stat_write = writer(f)
+            for s in self.stats:
+                stat_write.writerow([s] + self.stats[s].get_data())
