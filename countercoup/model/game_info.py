@@ -38,8 +38,8 @@ class GameInfoSet:
 
     def get_attack_player(self):
         """
-        Get the counteract player
-        :return: the counteract player
+        Get the attack player
+        :return: the attack player
         """
         return self.players[self.attack_player]
 
