@@ -10,6 +10,7 @@ class GameInfoSet:
     attack_player = None
     counteract_player = None
     action_player = None
+    winning_player = None
 
     current_action = None
     current_history = None
