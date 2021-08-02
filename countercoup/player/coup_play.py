@@ -60,4 +60,11 @@ class CoupPlay:
         self.tally[game.winning_player] += 1
         return game.winning_player
 
+    def run_batch(self, num):
+        """
+        Run a batch of games
+        :param num: the number of games to play
+        """
 
+        for _ in range(num):
+            self.run()
