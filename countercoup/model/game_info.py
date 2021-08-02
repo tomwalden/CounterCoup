@@ -36,6 +36,13 @@ class GameInfoSet:
         """
         return self.players[self.counteract_player]
 
+    def get_attack_player(self):
+        """
+        Get the counteract player
+        :return: the counteract player
+        """
+        return self.players[self.attack_player]
+
     def get_opponents(self):
         """
         Return a list of opponents to the current player
