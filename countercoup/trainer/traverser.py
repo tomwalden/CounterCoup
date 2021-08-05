@@ -52,10 +52,13 @@ class Traverser:
         if game.state == GameFinished:
 
             self.stats.total_terminal_nodes += 1
+            self.stats.total_hist_length += game.get_game_length()
 
             if game.winning_player == curr_play:
+                self.stats.game_wins += 1
                 return 1
             else:
+                self.stats.game_loses += 1
                 return -1
 
         else:
