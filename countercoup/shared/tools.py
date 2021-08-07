@@ -26,6 +26,35 @@ class Tools:
         return None
 
     @staticmethod
+    def select_multiple_from_strategy(dist: dict, num: int) -> []:
+        """
+        Select multiple keys from a strategy
+        :param dist: the strategy distribution in the form {action: prob}
+        :param num: number of keys to return
+        :return: a list of selected actions
+        """
+
+        output = []
+        dist_c = dist.copy()
+
+        for _ in range(num):
+            key = Tools.select_from_strategy(dist_c)
+            output.append(key)
+
+            del dist_c[key]
+            dist_c = Tools.normalise(dist_c)
+
+        return output
+
+    @staticmethod
+    def normalise(strategy: dict) -> dict:
+        total = sum(strategy.values())
+        if total > 0:
+            return {x: strategy[x] / total for x in strategy}
+        else:
+            return {x: 1 / len(strategy) for x in strategy}
+
+    @staticmethod
     def get_actions(g: Game):
         """
         Returns available actions for the current player, assuming that we're at the SelectAction state
