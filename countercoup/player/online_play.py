@@ -79,7 +79,8 @@ class OnlinePlay:
 
         for p in payload:
             pl = self.game.players[self.names.index(p["name"])]
-            self._log.info("{player} has {cards}".format(player=p["name"], cards=p["influences"]))
+            self._log.info("{player} has {cards}, {coins} coins"
+                           .format(player=p["name"], cards=p["influences"], coins=p["money"]))
 
             pl.cards = []
             for c in p["influences"]:
@@ -114,6 +115,9 @@ class OnlinePlay:
         if self.game.current_player == self.game.action_player:
             return
 
+        if not self.game.get_curr_player().in_game:
+            return
+
         self.game.current_action = self._r_action_map[payload["action"]]
         self.game.action_player = self.names.index(payload["source"])
 
@@ -137,6 +141,9 @@ class OnlinePlay:
     def choose_card_to_lose(self):
         """Select a card to lose, if we have to"""
 
+        if not self.game.get_curr_player().in_game:
+            return
+
         strategy = self.agent.get_lose_card_strategy(self.game)
         decision = Tools.select_from_strategy(strategy).card1
 
@@ -152,6 +159,9 @@ class OnlinePlay:
 
     def reveal_card(self, payload: []):
         """When being blocked, either reveal the card we have or select a card to lose"""
+
+        if not self.game.get_curr_player().in_game:
+            return
 
         action = self._r_action_map[payload["action"]["action"]]
 
@@ -179,6 +189,9 @@ class OnlinePlay:
     def choose_cards_to_discard(self, payload: []):
         """Decide which cards to lose when Exchanging"""
 
+        if not self.game.get_curr_player().in_game:
+            return
+
         cards = [self._r_card_map[p] for p in payload]
         self.game.get_curr_player().cards.append(cards[0])
         self.game.get_curr_player().cards.append(cards[1])
@@ -205,6 +218,9 @@ class OnlinePlay:
         """Decide to counteract another players actions"""
 
         if self.game.current_player == self.game.action_player:
+            return
+
+        if not self.game.get_curr_player().in_game:
             return
 
         self.game.current_action = self._r_action_map[payload["action"]]
@@ -245,6 +261,9 @@ class OnlinePlay:
         """Decide if to block a counteraction"""
 
         if payload["counterAction"]["source"] == self.bot_name:
+            return
+
+        if not self.game.get_curr_player().in_game:
             return
 
         self.game.current_action = self._r_action_map[payload["prevAction"]["action"]]
