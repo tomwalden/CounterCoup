@@ -67,6 +67,16 @@ class OnlinePlay:
         self.game = GameInfoSet()
         self.complete_games = []
 
+    def party_update(self, payload: []):
+        """Update the pary before the game starts"""
+
+        self.game.players = []
+        self.names = []
+
+        for p in payload:
+            self.names.append(p["name"])
+            self.game.players.append(Player())
+
     def update_players(self, payload: []):
         """Update the game with player names and states"""
 
@@ -318,6 +328,10 @@ class OnlinePlay:
         if m is not None:
             self.game.current_history.counteract_block_player = self.names.index(m[1])
             self.game.current_history.counteract_block_successful = True if m[3] == 'succeeded' else False
+
+        m = re.match("(\w+) lost their (\w+)")
+        if m is not None:
+            self.game.players[self.names.index(m[1])].discard.append(self._r_card_map[m[2]])
 
     def update_current_player(self, payload: []):
         """Update the action player"""
