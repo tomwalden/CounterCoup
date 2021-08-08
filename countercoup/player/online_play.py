@@ -369,6 +369,7 @@ class OnlinePlay:
         self.client.on("g-chooseReveal", self.reveal_card, namespace=self.nspace)
         self.client.on("g-gameOver", self.game_over, namespace=self.nspace)
         self.client.on("leaderDisconnect", self.leader_leaves, namespace=self.nspace)
+        self.client.on("partyUpdate", self.party_update, namespace=self.nspace)
 
     def run(self):
         """Run the client"""
