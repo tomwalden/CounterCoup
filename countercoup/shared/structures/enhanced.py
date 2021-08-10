@@ -18,7 +18,7 @@ class Enhanced(Structure):
         hist_lstm_play_2 = LSTM(10)(history_play_2_input)
         hist_lstm_play_3 = LSTM(10)(history_play_3_input)
 
-        lstm_concat = Concatenate(axis=1)[hist_lstm_curr, hist_lstm_play_1, hist_lstm_play_2, hist_lstm_play_3]
+        lstm_concat = Concatenate(axis=1)([hist_lstm_curr, hist_lstm_play_1, hist_lstm_play_2, hist_lstm_play_3])
 
         lstm_dense_1 = Dense(40, activation='sigmoid')(lstm_concat)
         lstm_dense_2 = Dense(40, activation='sigmoid')(lstm_dense_1)
