@@ -329,7 +329,7 @@ class OnlinePlay:
             self.game.current_history.counteract_block_player = self.names.index(m[1])
             self.game.current_history.counteract_block_successful = True if m[3] == 'succeeded' else False
 
-        m = re.match("(\w+) lost their (\w+)")
+        m = re.match("(\w+) lost their (\w+)", ls)
         if m is not None:
             self.game.players[self.names.index(m[1])].discard.append(self._r_card_map[m[2]])
 
