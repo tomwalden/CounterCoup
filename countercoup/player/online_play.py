@@ -139,7 +139,7 @@ class OnlinePlay:
 
         self._log.info("Making block decision")
         self._log.info("Obtained strategy: {strat}".format(strat=strategy))
-        self._log.info("Decision:{dec} blocked".format(dec=" not" if not decision else None))
+        self._log.info("Decision: {dec}".format(dec="not blocked" if not decision else "blocked"))
 
         self.client.emit("g-challengeDecision"
                                  , {"action": payload
@@ -244,7 +244,7 @@ class OnlinePlay:
 
         self._log.info("Making counteraction decision")
         self._log.info("Obtained strategy: {strat}".format(strat=strategy))
-        self._log.info("Decision:{dec} blocked".format(dec=" not" if not decision else None))
+        self._log.info("Decision: {dec}".format(dec="not counteracted" if not decision else "counteracted"))
 
         if decision:
             card_intersect = [c for c in self.game.get_curr_player().cards if c in self.game.current_action.c_action_cards]
@@ -288,7 +288,7 @@ class OnlinePlay:
 
         self._log.info("Making counteraction block decision")
         self._log.info("Obtained strategy: {strat}".format(strat=strategy))
-        self._log.info("Decision:{dec} blocked".format(dec=" not" if not decision else None))
+        self._log.info("Decision: {dec}".format(dec="not blocked" if not decision else "blocked"))
 
         if decision:
             self.client.emit("g-blockChallengeDecision",
