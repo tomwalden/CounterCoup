@@ -103,7 +103,7 @@ class Trainer:
         """
         Train the strategy networks
         """
-
+        self._log.info('Training strategy nets')
         self.strategy_nets = NetworkGroup(structure=self.net_structure)
         self.strategy_nets.train_networks(self.action_strategy_mem
                                           , self.block_strategy_mem
