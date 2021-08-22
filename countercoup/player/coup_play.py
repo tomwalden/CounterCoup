@@ -88,3 +88,12 @@ class CoupPlay:
         self.histories[game.winning_player].append(game.history)
 
         return game.winning_player
+
+    def run_batch(self, num):
+        """
+        Run a batch of games
+        :param num: the number of games to play
+        """
+
+        for _ in range(num):
+            self.run()
