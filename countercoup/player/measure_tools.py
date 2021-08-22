@@ -9,10 +9,10 @@ class MeasureTools:
 
         stats = [[] for _ in agents]
 
-        for _ in count:
+        for _ in range(count):
             cp = CoupPlay(agents)
 
-            for _ in chunk:
+            for _ in range(chunk):
                 cp.run()
 
             for n, x in enumerate(cp.tally):
