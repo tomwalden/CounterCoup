@@ -5,7 +5,7 @@ from countercoup.player.coup_play import CoupPlay
 class MeasureTools:
 
     @staticmethod
-    def measure(agents: [], chunk: int, count: int):
+    def measure_win_rate(agents: [], chunk: int, count: int):
 
         stats = [[] for _ in agents]
 
@@ -16,7 +16,7 @@ class MeasureTools:
                 cp.run()
 
             for n, x in enumerate(cp.tally):
-                stats[n].append(x)
+                stats[n].append(x / chunk)
 
         results = []
 
