@@ -10,7 +10,7 @@ class SinglePlay:
     """Get the history for a single game"""
 
     @staticmethod
-    def run(self, agents: []) -> []:
+    def run(agents: []) -> []:
 
         game = Game(len(agents))
         history = [deepcopy(game)]
