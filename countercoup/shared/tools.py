@@ -48,6 +48,12 @@ class Tools:
 
     @staticmethod
     def normalise(strategy: dict) -> dict:
+        """
+        Normalise a dictionary, or return an equal distribution if = 0
+        :param strategy: the strategy to normalise
+        :return: the normalised strategy
+        """
+
         total = sum(strategy.values())
         if total > 0:
             return {x: strategy[x] / total for x in strategy}
