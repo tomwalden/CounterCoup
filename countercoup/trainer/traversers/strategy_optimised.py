@@ -14,7 +14,7 @@ from random import sample
 
 class LimitedRobust(Traverser):
     """
-    Class that allows for parallel traversals of the game tree
+    Traverser for strategy optimised robust sampling
     """
 
     def traverse(self, game: Game, curr_play: int):

@@ -14,7 +14,7 @@ from random import sample
 
 class Outcome(Traverser):
     """
-    Class that allows for parallel traversals of the game tree
+    Traverser for outcome sampling - select one action per turn
     """
 
     def traverse(self, game: Game, curr_play: int):

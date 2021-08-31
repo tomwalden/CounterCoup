@@ -4,6 +4,7 @@ from countercoup.model.items.cards import Duke, Assassin, Ambassador, Captain, C
 
 
 class LoseNet(Network):
+    """Network used for discards and loses"""
 
     outputs = [Hand([Duke, Duke]), Hand([Duke, Assassin]), Hand([Duke, Ambassador]), Hand([Duke, Captain]),
                Hand([Duke, Contessa]), Hand([Assassin, Assassin]), Hand([Assassin, Ambassador]),

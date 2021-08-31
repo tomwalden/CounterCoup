@@ -9,7 +9,7 @@ from countercoup.shared.tools import Tools
 
 class SelfPlay:
     """
-    Have a bunch of agents play Coup against each other
+    Have several agents play Coup against each other
     """
 
     def __init__(self, agents: []):

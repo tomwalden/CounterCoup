@@ -4,6 +4,7 @@ from countercoup.shared.structure import Structure
 
 
 class LSTMNet(Structure):
+    """Default structure, 6 layers with LSTM cells"""
 
     @staticmethod
     def define_structure(outputs: []) -> Model:

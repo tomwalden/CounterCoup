@@ -4,6 +4,7 @@ from countercoup.shared.structure import Structure
 
 
 class Basic(Structure):
+    """Basic structure, 6 layers with no recurrent cells"""
 
     @staticmethod
     def define_structure(outputs: []) -> Model:

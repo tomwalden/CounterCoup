@@ -4,6 +4,7 @@ from countercoup.shared.structure import Structure
 
 
 class EnhancedBasic(Structure):
+    """Basic enhanced structure, same as Enhanced structure but without LSTM cells"""
 
     @staticmethod
     def define_structure(outputs: []) -> Model:
