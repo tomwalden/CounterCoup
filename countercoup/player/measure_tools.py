@@ -1,5 +1,5 @@
 from statistics import stdev, mean
-from countercoup.player.coup_play import CoupPlay
+from countercoup.player.self_play import SelfPlay
 
 
 class MeasureTools:
@@ -10,7 +10,7 @@ class MeasureTools:
         stats = [[] for _ in agents]
 
         for _ in range(count):
-            cp = CoupPlay(agents)
+            cp = SelfPlay(agents)
 
             for _ in range(chunk):
                 cp.run()
