@@ -7,7 +7,7 @@ from countercoup.shared.networks.lose_net import LoseNet
 from countercoup.shared.tools import Tools
 
 
-class CoupPlay:
+class SelfPlay:
     """
     Have a bunch of agents play Coup against each other
     """
@@ -20,6 +20,7 @@ class CoupPlay:
         self.agents = agents
         self.tally = [0 for _ in agents]
 
+        # Log the actions that take place
         self.action_tally = [{x: 0 for x in ActionNet.outputs} for _ in agents]
         self.block_tally = [{x: 0 for x in BlockCounteractNet.outputs} for _ in agents]
         self.counteract_tally = [{x: 0 for x in BlockCounteractNet.outputs} for _ in agents]
