@@ -7,6 +7,7 @@ from countercoup.shared.memory import Memory
 from countercoup.shared.structure import Structure
 from countercoup.trainer.traverser import Traverser
 from countercoup.trainer.trainer_stats import TrainerStats
+from countercoup.trainer.traversers.limited_robust import LimitedRobust
 from multiprocessing import Queue, Process
 from time import sleep
 from logging import getLogger
@@ -20,7 +21,12 @@ class Trainer:
 
     _log = getLogger('trainer')
 
-    def __init__(self, num_of_traversals, advantage_memory_size, strategy_memory_size, structure: Structure = None):
+    def __init__(self
+                 , num_of_traversals
+                 , advantage_memory_size
+                 , strategy_memory_size
+                 , structure: Structure = None
+                 , traverser: Traverser = None):
         """
         Set up our Trainer
         :param num_of_traversals: number of tree traversals per player
@@ -53,6 +59,12 @@ class Trainer:
 
         self.strategy_nets = None
         self.net_structure = structure
+
+        if traverser is not None:
+            self.traverser = traverser
+        else:
+            self.traverser = LimitedRobust
+
         self.stats = dict()
 
         self.init_advantage_nets()
@@ -130,11 +142,11 @@ class Trainer:
 
         # Spin up our processes
         for p in range(num_of_processes):
-            traverser = Traverser(self.action_nets
-                                  , self.block_nets
-                                  , self.counteract_nets
-                                  , self.lose_nets
-                                  , self.iteration)
+            traverser = self.traverser(self.action_nets
+                                       , self.block_nets
+                                       , self.counteract_nets
+                                       , self.lose_nets
+                                       , self.iteration)
             processes.append(Process(target=self.run_process, args=(input_queue
                                                                     , output_queue
                                                                     , traverser
@@ -211,3 +223,10 @@ class Trainer:
             stat_write = writer(f)
             for s in self.stats:
                 stat_write.writerow([s] + self.stats[s].get_data())
+
+    def save(self, file_path):
+        """
+        Save the strategy nets to a file
+        :param file_path: the path to save the nets to
+        """
+        self.strategy_nets.save(file_path)
