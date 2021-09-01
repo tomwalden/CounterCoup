@@ -249,9 +249,6 @@ class Game(GameInfoSet):
             both_cards = [x for x in self.get_counteract_player().cards if x in self.current_action.c_action_cards]
 
             if both_cards:
-
-                # TODO: we should allow the model to select the card to get rid of, if the counteracting player
-                # has both the Ambassador and Captain
                 c_action_card = both_cards[0]
                 self.current_history.counteract_block_successful = False
 

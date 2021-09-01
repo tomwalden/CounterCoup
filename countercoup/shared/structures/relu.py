@@ -4,6 +4,7 @@ from countercoup.shared.structure import Structure
 
 
 class ReluNet(Structure):
+    """Default structure but with ReLU activation"""
 
     @staticmethod
     def define_structure(outputs: []) -> Model:

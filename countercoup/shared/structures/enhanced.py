@@ -4,6 +4,7 @@ from countercoup.shared.structure import Structure
 
 
 class Enhanced(Structure):
+    """Enhanced structure, 10 layers plus sigmoid layers after LSTM cells"""
 
     @staticmethod
     def define_structure(outputs: []) -> Model:
