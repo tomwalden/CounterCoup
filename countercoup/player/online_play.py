@@ -53,7 +53,7 @@ class OnlinePlay:
 
     def __init__(self, agent: Agent
                  , game_code: str
-                 , uri: str = 'https://rocky-stream-49978.herokuapp.com'
+                 , uri
                  , bot_name: str = 'CCoup'):
 
         self.agent = agent
